@@ -151,7 +151,7 @@ const DashboardLayout = () => {
             </button>
             <div className="flex items-center">
               <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-semibold">
-                BV
+                BS
               </div>
               <span className="ml-2 text-sm font-medium text-gray-700">Admin</span>
             </div>
