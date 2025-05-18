@@ -18,6 +18,7 @@ const AddTransaction = () => {
   
   const [formData, setFormData] = useState({
     clientId: initialClientId,
+    accountId: '',
     type: initialType,
     amount: '',
     description: '',
@@ -29,10 +30,18 @@ const AddTransaction = () => {
   useEffect(() => {
     document.title = formData.type === 'deposit' ? 'Nouveau Dépôt | Volvy Bank' : 'Nouveau Retrait | Volvy Bank';
     
+    // Reset accountId when client changes
+    if (formData.clientId) {
+      const client = clients.find(c => c.id === formData.clientId);
+      if (client && client.accounts.length > 0) {
+        setFormData(prev => ({ ...prev, accountId: client.accounts[0].id }));
+      }
+    }
+    
     return () => {
       document.title = 'Volvy Bank';
     };
-  }, [formData.type]);
+  }, [formData.type, formData.clientId, clients]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -58,6 +67,10 @@ const AddTransaction = () => {
       newErrors.clientId = 'Veuillez sélectionner un client';
     }
     
+    if (!formData.accountId) {
+      newErrors.accountId = 'Veuillez sélectionner un compte';
+    }
+    
     if (!formData.amount || isNaN(Number(formData.amount))) {
       newErrors.amount = 'Veuillez entrer un montant valide';
     } else {
@@ -67,9 +80,10 @@ const AddTransaction = () => {
       }
     }
     
-    if (formData.type === 'withdrawal' && formData.clientId && !isNaN(Number(formData.amount))) {
+    if (formData.type === 'withdrawal' && formData.clientId && formData.accountId && !isNaN(Number(formData.amount))) {
       const client = clients.find(c => c.id === formData.clientId);
-      if (client && Number(formData.amount) > client.totalBalance) {
+      const account = client?.accounts.find(a => a.id === formData.accountId);
+      if (account && Number(formData.amount) > account.balance) {
         newErrors.amount = 'Solde insuffisant';
       }
     }
@@ -88,6 +102,7 @@ const AddTransaction = () => {
     if (validateForm()) {
       addTransaction({
         clientId: formData.clientId,
+        accountId: formData.accountId,
         type: formData.type as 'deposit' | 'withdrawal',
         amount: Number(formData.amount),
         description: formData.description,
@@ -99,6 +114,7 @@ const AddTransaction = () => {
   };
   
   const selectedClient = clients.find(client => client.id === formData.clientId);
+  const selectedAccount = selectedClient?.accounts.find(account => account.id === formData.accountId);
   
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -174,12 +190,39 @@ const AddTransaction = () => {
             </div>
             
             {selectedClient && (
-              <div className="bg-gray-50 p-4 rounded-md mb-4">
-                <p className="text-sm text-gray-500">Solde actuel</p>
-                <p className="text-lg font-semibold text-gray-800">
-                  {formatCurrency(selectedClient.totalBalance)}
-                </p>
-              </div>
+              <>
+                <div className="form-control">
+                  <label htmlFor="accountId" className="form-label">
+                    Compte <span className="text-error-500">*</span>
+                  </label>
+                  <select
+                    id="accountId"
+                    name="accountId"
+                    value={formData.accountId}
+                    onChange={handleInputChange}
+                    className={`form-input ${errors.accountId ? 'border-error-500' : ''}`}
+                  >
+                    <option value="">Sélectionner un compte</option>
+                    {selectedClient.accounts.map(account => (
+                      <option key={account.id} value={account.id}>
+                        {account.accountNumber} - {account.type} ({formatCurrency(account.balance)})
+                      </option>
+                    ))}
+                  </select>
+                  {errors.accountId && (
+                    <p className="mt-1 text-sm text-error-500">{errors.accountId}</p>
+                  )}
+                </div>
+
+                {selectedAccount && (
+                  <div className="bg-gray-50 p-4 rounded-md mb-4">
+                    <p className="text-sm text-gray-500">Solde du compte</p>
+                    <p className="text-lg font-semibold text-gray-800">
+                      {formatCurrency(selectedAccount.balance)}
+                    </p>
+                  </div>
+                )}
+              </>
             )}
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

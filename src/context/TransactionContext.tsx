@@ -67,10 +67,11 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
 
     setTransactions(prevTransactions => [...prevTransactions, newTransaction]);
     
-    // Update client balance
+    // Update client balance for the specific account
     updateClientBalance(
-      newTransaction.clientId, 
-      newTransaction.amount, 
+      newTransaction.clientId,
+      newTransaction.accountId,
+      newTransaction.amount,
       newTransaction.type === 'deposit'
     );
     
@@ -84,6 +85,7 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
       // Reverse the effect on client balance before deletion
       updateClientBalance(
         transaction.clientId,
+        transaction.accountId,
         transaction.amount,
         transaction.type !== 'deposit' // If it was a deposit, we need to subtract, and vice versa
       );
