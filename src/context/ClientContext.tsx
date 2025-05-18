@@ -8,10 +8,10 @@ interface ClientContextProps {
   loading: boolean;
   error: string | null;
   getClient: (id: string) => Client | undefined;
-  addClient: (client: Omit<Client, 'id' | 'createdAt' | 'totalBalance'>) => void;
+  addClient: (client: Omit<Client, 'id' | 'createdAt' | 'totalBalance' | 'accounts'>) => void;
   updateClient: (id: string, client: Partial<Client>) => void;
   deleteClient: (id: string) => void;
-  updateClientBalance: (id: string, amount: number, isDeposit: boolean) => void;
+  updateClientBalance: (id: string, accountId: string, amount: number, isDeposit: boolean) => void;
 }
 
 const ClientContext = createContext<ClientContextProps | undefined>(undefined);
@@ -30,7 +30,12 @@ export const ClientProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         if (storedClients) {
           setClients(JSON.parse(storedClients));
         } else {
-          setClients(mockClients);
+          // Calculate total balance for each client from their accounts
+          const clientsWithTotalBalance = mockClients.map(client => ({
+            ...client,
+            totalBalance: client.accounts.reduce((sum, account) => sum + account.balance, 0)
+          }));
+          setClients(clientsWithTotalBalance);
         }
         setLoading(false);
       } catch (err) {
@@ -51,12 +56,13 @@ export const ClientProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     return clients.find(client => client.id === id);
   };
 
-  const addClient = (client: Omit<Client, 'id' | 'createdAt' | 'totalBalance'>) => {
+  const addClient = (client: Omit<Client, 'id' | 'createdAt' | 'totalBalance' | 'accounts'>) => {
     const newClient: Client = {
       ...client,
       id: getNewId('c'),
       createdAt: new Date().toISOString().split('T')[0],
       totalBalance: 0,
+      accounts: []
     };
 
     setClients(prevClients => [...prevClients, newClient]);
@@ -77,17 +83,28 @@ export const ClientProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     toast.success('Client supprimé avec succès!');
   };
 
-  const updateClientBalance = (id: string, amount: number, isDeposit: boolean) => {
+  const updateClientBalance = (id: string, accountId: string, amount: number, isDeposit: boolean) => {
     setClients(prevClients => 
       prevClients.map(client => {
         if (client.id === id) {
-          const newBalance = isDeposit 
-            ? client.totalBalance + amount
-            : client.totalBalance - amount;
+          // Update specific account balance
+          const updatedAccounts = client.accounts.map(account => {
+            if (account.id === accountId) {
+              return {
+                ...account,
+                balance: isDeposit ? account.balance + amount : account.balance - amount
+              };
+            }
+            return account;
+          });
+          
+          // Calculate new total balance from all accounts
+          const newTotalBalance = updatedAccounts.reduce((sum, account) => sum + account.balance, 0);
           
           return {
             ...client,
-            totalBalance: newBalance
+            accounts: updatedAccounts,
+            totalBalance: newTotalBalance
           };
         }
         return client;
