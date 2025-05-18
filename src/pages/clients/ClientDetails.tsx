@@ -13,7 +13,8 @@ import {
   Download,
   Edit,
   Trash2,
-  AlertCircle
+  AlertCircle,
+  Plus
 } from 'lucide-react';
 import { useClients } from '../../context/ClientContext';
 import { useTransactions } from '../../context/TransactionContext';
@@ -21,15 +22,18 @@ import { useLoans } from '../../context/LoanContext';
 import { format } from 'date-fns';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
+import { generateAccountNumber } from '../../types';
 
 const ClientDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { clients, getClient, deleteClient } = useClients();
+  const { clients, getClient, deleteClient, updateClient } = useClients();
   const { transactions, getClientTransactions } = useTransactions();
   const { getClientLoans } = useLoans();
   
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showAddAccountModal, setShowAddAccountModal] = useState(false);
+  const [newAccountType, setNewAccountType] = useState<'savings' | 'checking'>('savings');
   
   if (!id) {
     return <div>Client ID is missing</div>;
@@ -67,6 +71,21 @@ const ClientDetails = () => {
   const confirmDelete = () => {
     deleteClient(id);
     navigate('/clients');
+  };
+
+  const handleAddAccount = () => {
+    const newAccount = {
+      id: `acc_${Date.now()}`,
+      accountNumber: generateAccountNumber(),
+      type: newAccountType,
+      balance: 0,
+      currency: 'HTG',
+      createdAt: new Date().toISOString()
+    };
+
+    const updatedAccounts = [...client.accounts, newAccount];
+    updateClient(id, { accounts: updatedAccounts });
+    setShowAddAccountModal(false);
   };
   
   const generatePDF = () => {
@@ -226,25 +245,56 @@ const ClientDetails = () => {
                   <p className="text-gray-500 italic">Aucun contact d'urgence</p>
                 )}
               </div>
-            </div>
-            
-            <div className="bg-gray-50 p-4 flex justify-center space-x-3">
-              <Link 
-                to="/transactions/add" 
-                state={{ clientId: id }}
-                className="btn btn-success flex items-center text-sm"
-              >
-                <ArrowUpCircle size={16} className="mr-1" />
-                Dépôt
-              </Link>
-              <Link 
-                to="/transactions/add" 
-                state={{ clientId: id, isWithdrawal: true }}
-                className="btn btn-danger flex items-center text-sm"
-              >
-                <ArrowDownCircle size={16} className="mr-1" />
-                Retrait
-              </Link>
+
+              {/* Accounts Section */}
+              <div className="border-t border-gray-200 pt-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-gray-700 font-medium">Comptes</h3>
+                  <button
+                    onClick={() => setShowAddAccountModal(true)}
+                    className="text-primary-600 hover:text-primary-800 flex items-center text-sm"
+                  >
+                    <Plus size={16} className="mr-1" />
+                    Ajouter
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {client.accounts.map(account => (
+                    <div key={account.id} className="bg-gray-50 p-3 rounded-md">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">
+                            {account.type === 'savings' ? 'Épargne' : 'Courant'}
+                          </p>
+                          <p className="text-xs text-gray-500">{account.accountNumber}</p>
+                        </div>
+                        <p className="text-sm font-semibold">{formatCurrency(account.balance)}</p>
+                      </div>
+                      <div className="mt-2 flex space-x-2">
+                        <Link 
+                          to="/transactions/add" 
+                          state={{ clientId: id, accountId: account.id }}
+                          className="text-success-600 hover:text-success-800 text-xs flex items-center"
+                        >
+                          <ArrowUpCircle size={14} className="mr-1" />
+                          Dépôt
+                        </Link>
+                        <Link 
+                          to="/transactions/add" 
+                          state={{ clientId: id, accountId: account.id, isWithdrawal: true }}
+                          className="text-error-600 hover:text-error-800 text-xs flex items-center"
+                        >
+                          <ArrowDownCircle size={14} className="mr-1" />
+                          Retrait
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                  {client.accounts.length === 0 && (
+                    <p className="text-gray-500 text-sm italic">Aucun compte</p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -434,6 +484,57 @@ const ClientDetails = () => {
                   type="button"
                   className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                   onClick={() => setShowDeleteModal(false)}
+                >
+                  Annuler
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Account Modal */}
+      {showAddAccountModal && (
+        <div className="fixed z-10 inset-0 overflow-y-auto">
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="sm:flex sm:items-start">
+                  <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-primary-100 sm:mx-0 sm:h-10 sm:w-10">
+                    <CreditCard className="h-6 w-6 text-primary-600" />
+                  </div>
+                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900">Ajouter un compte</h3>
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-700">Type de compte</label>
+                      <select
+                        value={newAccountType}
+                        onChange={(e) => setNewAccountType(e.target.value as 'savings' | 'checking')}
+                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+                      >
+                        <option value="savings">Compte d'épargne</option>
+                        <option value="checking">Compte courant</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button
+                  type="button"
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:ml-3 sm:w-auto sm:text-sm"
+                  onClick={handleAddAccount}
+                >
+                  Ajouter
+                </button>
+                <button
+                  type="button"
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  onClick={() => setShowAddAccountModal(false)}
                 >
                   Annuler
                 </button>

@@ -13,12 +13,14 @@ const AddTransaction = () => {
   const { clients } = useClients();
   const { addTransaction } = useTransactions();
   
+  // Get initial values from location state
   const initialClientId = location.state?.clientId || '';
+  const initialAccountId = location.state?.accountId || '';
   const initialType = location.state?.isWithdrawal ? 'withdrawal' : 'deposit';
   
   const [formData, setFormData] = useState({
     clientId: initialClientId,
-    accountId: '',
+    accountId: initialAccountId,
     type: initialType,
     amount: '',
     description: '',
@@ -30,8 +32,8 @@ const AddTransaction = () => {
   useEffect(() => {
     document.title = formData.type === 'deposit' ? 'Nouveau Dépôt | Volvy Bank' : 'Nouveau Retrait | Volvy Bank';
     
-    // Reset accountId when client changes
-    if (formData.clientId) {
+    // Reset accountId when client changes (unless it was provided in initial state)
+    if (formData.clientId && !initialAccountId) {
       const client = clients.find(c => c.id === formData.clientId);
       if (client && client.accounts.length > 0) {
         setFormData(prev => ({ ...prev, accountId: client.accounts[0].id }));
@@ -41,7 +43,7 @@ const AddTransaction = () => {
     return () => {
       document.title = 'Volvy Bank';
     };
-  }, [formData.type, formData.clientId, clients]);
+  }, [formData.type, formData.clientId, clients, initialAccountId]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -74,7 +76,7 @@ const AddTransaction = () => {
     if (!formData.amount || isNaN(Number(formData.amount))) {
       newErrors.amount = 'Veuillez entrer un montant valide';
     } else {
-      const amount = Number(formData.amount);
+      const amount =Number(formData.amount);
       if (amount < MIN_AMOUNT) {
         newErrors.amount = `Le montant minimum est de ${MIN_AMOUNT} ${formData.currency}`;
       }
@@ -201,11 +203,12 @@ const AddTransaction = () => {
                     value={formData.accountId}
                     onChange={handleInputChange}
                     className={`form-input ${errors.accountId ? 'border-error-500' : ''}`}
+                    disabled={!!initialAccountId}
                   >
                     <option value="">Sélectionner un compte</option>
                     {selectedClient.accounts.map(account => (
                       <option key={account.id} value={account.id}>
-                        {account.accountNumber} - {account.type} ({formatCurrency(account.balance)})
+                        {account.accountNumber} - {account.type === 'savings' ? 'Épargne' : 'Courant'} ({formatCurrency(account.balance)})
                       </option>
                     ))}
                   </select>
