@@ -13,6 +13,7 @@ interface LoanContextProps {
   addLoan: (loan: Omit<Loan, 'id' | 'payments' | 'remainingBalance' | 'status'>) => void;
   updateLoanStatus: (id: string, status: Loan['status']) => void;
   addLoanPayment: (loanId: string, amount: number) => void;
+  deleteLoan: (id: string) => void;
 }
 
 const LoanContext = createContext<LoanContextProps | undefined>(undefined);
@@ -107,6 +108,11 @@ export const LoanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     toast.success('Paiement du prêt effectué avec succès!');
   };
 
+  const deleteLoan = (id: string) => {
+    setLoans(prevLoans => prevLoans.filter(loan => loan.id !== id));
+    toast.success('Prêt supprimé avec succès!');
+  };
+
   return (
     <LoanContext.Provider
       value={{
@@ -117,7 +123,8 @@ export const LoanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         getClientLoans,
         addLoan,
         updateLoanStatus,
-        addLoanPayment
+        addLoanPayment,
+        deleteLoan
       }}
     >
       {children}

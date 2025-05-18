@@ -1,4 +1,4 @@
-import { Client, Transaction, Loan } from '../types';
+import { Client, Transaction, Loan, generateAccountNumber } from '../types';
 import { format, addMonths, subDays, subMonths } from 'date-fns';
 
 // Helper function to generate random IDs with at least 6 characters
@@ -24,7 +24,24 @@ export const mockClients: Client[] = [
     },
     profileImage: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
     createdAt: format(subMonths(new Date(), 5), 'yyyy-MM-dd'),
-    totalBalance: 2500,
+    accounts: [
+      {
+        id: generateId(),
+        accountNumber: generateAccountNumber(),
+        type: 'savings',
+        balance: 1500,
+        currency: 'HTG',
+        createdAt: format(subMonths(new Date(), 5), 'yyyy-MM-dd')
+      },
+      {
+        id: generateId(),
+        accountNumber: generateAccountNumber(),
+        type: 'checking',
+        balance: 1000,
+        currency: 'HTG',
+        createdAt: format(subMonths(new Date(), 4), 'yyyy-MM-dd')
+      }
+    ]
   },
   {
     id: 'client2345678',
@@ -40,26 +57,35 @@ export const mockClients: Client[] = [
     },
     profileImage: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
     createdAt: format(subMonths(new Date(), 3), 'yyyy-MM-dd'),
-    totalBalance: 1750,
-  },
-  // ... rest of the mock clients with updated currency values and phone numbers
+    accounts: [
+      {
+        id: generateId(),
+        accountNumber: generateAccountNumber(),
+        type: 'savings',
+        balance: 1750,
+        currency: 'HTG',
+        createdAt: format(subMonths(new Date(), 3), 'yyyy-MM-dd')
+      }
+    ]
+  }
 ];
 
-// Update mock transactions with new currency values
+// Update mock transactions with account IDs
 export const mockTransactions: Transaction[] = [
   {
     id: 't1',
     clientId: 'client1234567',
+    accountId: mockClients[0].accounts[0].id,
     type: 'deposit',
     amount: 500,
     description: 'Initial deposit',
     date: format(subDays(new Date(), 60), 'yyyy-MM-dd HH:mm:ss'),
     status: 'completed',
-  },
-  // ... rest of the mock transactions with updated currency values
+    currency: 'HTG'
+  }
 ];
 
-// Update mock loans with new currency values
+// Update mock loans
 export const mockLoans: Loan[] = [
   {
     id: 'l1',
@@ -73,18 +99,17 @@ export const mockLoans: Loan[] = [
     status: 'active',
     purpose: 'Car purchase',
     remainingBalance: 4100,
+    currency: 'HTG',
     payments: [
       {
         id: 'p1',
         loanId: 'l1',
         amount: 227.50,
         date: format(subMonths(new Date(), 5), 'yyyy-MM-dd'),
-        status: 'completed',
-      },
-      // ... rest of the payments with updated currency values
-    ],
-  },
-  // ... rest of the mock loans with updated currency values
+        status: 'completed'
+      }
+    ]
+  }
 ];
 
 // Function to get new ID

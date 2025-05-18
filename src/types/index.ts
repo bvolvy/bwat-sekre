@@ -1,3 +1,12 @@
+export interface Account {
+  id: string;
+  accountNumber: string;
+  type: 'savings' | 'checking';
+  balance: number;
+  currency: string;
+  createdAt: string;
+}
+
 export interface Client {
   id: string;
   firstName: string;
@@ -12,13 +21,13 @@ export interface Client {
   };
   profileImage: string;
   createdAt: string;
-  totalBalance: number;
-  currency: string;
+  accounts: Account[];
 }
 
 export interface Transaction {
   id: string;
   clientId: string;
+  accountId: string;
   type: 'deposit' | 'withdrawal';
   amount: number;
   description: string;
@@ -64,3 +73,10 @@ export interface ReportFilter {
 
 export const SUPPORTED_CURRENCIES = ['HTG', 'USD'] as const;
 export type Currency = typeof SUPPORTED_CURRENCIES[number];
+
+// Helper function to generate account numbers
+export const generateAccountNumber = (): string => {
+  const prefix = 'BS'; // Bwat Sekrè prefix
+  const randomDigits = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+  return `${prefix}${randomDigits}`;
+};
