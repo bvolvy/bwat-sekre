@@ -4,6 +4,9 @@ import { ArrowLeft, Info } from 'lucide-react';
 import { useClients } from '../../context/ClientContext';
 import { useLoans } from '../../context/LoanContext';
 import { addMonths, format } from 'date-fns';
+import { SUPPORTED_CURRENCIES } from '../../types';
+
+const MIN_AMOUNT = 50;
 
 const AddLoan = () => {
   const navigate = useNavigate();
@@ -20,7 +23,8 @@ const AddLoan = () => {
     interestRate: '8.5',
     term: '12', // Default to 12 months
     startDate: format(new Date(), 'yyyy-MM-dd'),
-    purpose: ''
+    purpose: '',
+    currency: 'HTG'
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -46,8 +50,8 @@ const AddLoan = () => {
       newErrors.clientId = 'Veuillez sélectionner un client';
     }
     
-    if (!formData.amount || isNaN(Number(formData.amount)) || Number(formData.amount) <= 0) {
-      newErrors.amount = 'Veuillez entrer un montant valide';
+    if (!formData.amount || isNaN(Number(formData.amount)) || Number(formData.amount) < MIN_AMOUNT) {
+      newErrors.amount = `Le montant minimum est de ${MIN_AMOUNT} ${formData.currency}`;
     }
     
     if (!formData.interestRate || isNaN(Number(formData.interestRate)) || Number(formData.interestRate) < 0) {
@@ -119,7 +123,8 @@ const AddLoan = () => {
         startDate: formData.startDate,
         endDate: format(endDate, 'yyyy-MM-dd'),
         paymentAmount: calculatePaymentAmount(),
-        purpose: formData.purpose
+        purpose: formData.purpose,
+        currency: formData.currency
       });
       
       // Navigate back to loans list
@@ -133,7 +138,7 @@ const AddLoan = () => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'HTG',
+      currency: formData.currency,
       minimumFractionDigits: 2
     }).format(amount);
   };
@@ -194,30 +199,54 @@ const AddLoan = () => {
                   </div>
                 )}
                 
-                {/* Loan Amount */}
-                <div className="form-control">
-                  <label htmlFor="amount" className="form-label">
-                    Montant du Prêt <span className="text-error-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      id="amount"
-                      name="amount"
-                      value={formData.amount}
-                      onChange={handleInputChange}
-                      className={`form-input pl-16 ${errors.amount ? 'border-error-500' : ''}`}
-                      placeholder="0"
-                      min="1000"
-                      step="1000"
-                    />
-                    <div className="absolute inset-y-0 left-0 flex items-center px-3 pointer-events-none border-r bg-gray-50 rounded-l-md">
-                      <span className="text-gray-500">XOF</span>
+                {/* Loan Amount and Currency */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="form-control">
+                    <label htmlFor="amount" className="form-label">
+                      Montant du Prêt <span className="text-error-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        id="amount"
+                        name="amount"
+                        value={formData.amount}
+                        onChange={handleInputChange}
+                        className={`form-input pl-16 ${errors.amount ? 'border-error-500' : ''}`}
+                        placeholder="0"
+                        min={MIN_AMOUNT}
+                        step="1"
+                      />
+                      <div className="absolute inset-y-0 left-0 flex items-center px-3 pointer-events-none border-r bg-gray-50 rounded-l-md">
+                        <span className="text-gray-500">{formData.currency}</span>
+                      </div>
                     </div>
+                    {errors.amount && (
+                      <p className="mt-1 text-sm text-error-500">{errors.amount}</p>
+                    )}
+                    <p className="mt-1 text-xs text-gray-500">
+                      Montant minimum: {MIN_AMOUNT} {formData.currency}
+                    </p>
                   </div>
-                  {errors.amount && (
-                    <p className="mt-1 text-sm text-error-500">{errors.amount}</p>
-                  )}
+
+                  <div className="form-control">
+                    <label htmlFor="currency" className="form-label">
+                      Devise <span className="text-error-500">*</span>
+                    </label>
+                    <select
+                      id="currency"
+                      name="currency"
+                      value={formData.currency}
+                      onChange={handleInputChange}
+                      className="form-input"
+                    >
+                      {SUPPORTED_CURRENCIES.map(currency => (
+                        <option key={currency} value={currency}>
+                          {currency}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -3,6 +3,9 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { ArrowLeft, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
 import { useClients } from '../../context/ClientContext';
 import { useTransactions } from '../../context/TransactionContext';
+import { SUPPORTED_CURRENCIES } from '../../types';
+
+const MIN_AMOUNT = 5;
 
 const AddTransaction = () => {
   const navigate = useNavigate();
@@ -10,7 +13,6 @@ const AddTransaction = () => {
   const { clients } = useClients();
   const { addTransaction } = useTransactions();
   
-  // Get clientId from location state if available
   const initialClientId = location.state?.clientId || '';
   const initialType = location.state?.isWithdrawal ? 'withdrawal' : 'deposit';
   
@@ -18,12 +20,12 @@ const AddTransaction = () => {
     clientId: initialClientId,
     type: initialType,
     amount: '',
-    description: ''
+    description: '',
+    currency: 'HTG'
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
   
-  // Update page title based on transaction type
   useEffect(() => {
     document.title = formData.type === 'deposit' ? 'Nouveau Dépôt | Volvy Bank' : 'Nouveau Retrait | Volvy Bank';
     
@@ -36,7 +38,6 @@ const AddTransaction = () => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     
-    // Clear error when field is edited
     if (errors[name]) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -57,11 +58,15 @@ const AddTransaction = () => {
       newErrors.clientId = 'Veuillez sélectionner un client';
     }
     
-    if (!formData.amount || isNaN(Number(formData.amount)) || Number(formData.amount) <= 0) {
+    if (!formData.amount || isNaN(Number(formData.amount))) {
       newErrors.amount = 'Veuillez entrer un montant valide';
+    } else {
+      const amount = Number(formData.amount);
+      if (amount < MIN_AMOUNT) {
+        newErrors.amount = `Le montant minimum est de ${MIN_AMOUNT} ${formData.currency}`;
+      }
     }
     
-    // For withdrawals, check if client has enough balance
     if (formData.type === 'withdrawal' && formData.clientId && !isNaN(Number(formData.amount))) {
       const client = clients.find(c => c.id === formData.clientId);
       if (client && Number(formData.amount) > client.totalBalance) {
@@ -81,26 +86,24 @@ const AddTransaction = () => {
     e.preventDefault();
     
     if (validateForm()) {
-      // Add the transaction
       addTransaction({
         clientId: formData.clientId,
         type: formData.type as 'deposit' | 'withdrawal',
         amount: Number(formData.amount),
-        description: formData.description
+        description: formData.description,
+        currency: formData.currency
       });
       
-      // Navigate back to transactions list
       navigate('/transactions');
     }
   };
   
-  // Get client for display
   const selectedClient = clients.find(client => client.id === formData.clientId);
   
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'HTG',
+      currency: formData.currency,
       minimumFractionDigits: 2
     }).format(amount);
   };
@@ -146,7 +149,6 @@ const AddTransaction = () => {
         
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
-            {/* Client Selection */}
             <div className="form-control">
               <label htmlFor="clientId" className="form-label">
                 Client <span className="text-error-500">*</span>
@@ -171,7 +173,6 @@ const AddTransaction = () => {
               )}
             </div>
             
-            {/* Show client balance if selected */}
             {selectedClient && (
               <div className="bg-gray-50 p-4 rounded-md mb-4">
                 <p className="text-sm text-gray-500">Solde actuel</p>
@@ -181,33 +182,55 @@ const AddTransaction = () => {
               </div>
             )}
             
-            {/* Amount */}
-            <div className="form-control">
-              <label htmlFor="amount" className="form-label">
-                Montant <span className="text-error-500">*</span>
-              </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  id="amount"
-                  name="amount"
-                  value={formData.amount}
-                  onChange={handleInputChange}
-                  className={`form-input pl-16 ${errors.amount ? 'border-error-500' : ''}`}
-                  placeholder="0"
-                  min="0"
-                  step="100"
-                />
-                <div className="absolute inset-y-0 left-0 flex items-center px-3 pointer-events-none border-r bg-gray-50 rounded-l-md">
-                  <span className="text-gray-500">XOF</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="form-control">
+                <label htmlFor="amount" className="form-label">
+                  Montant <span className="text-error-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    id="amount"
+                    name="amount"
+                    value={formData.amount}
+                    onChange={handleInputChange}
+                    className={`form-input pl-16 ${errors.amount ? 'border-error-500' : ''}`}
+                    placeholder="0"
+                    min={MIN_AMOUNT}
+                    step="1"
+                  />
+                  <div className="absolute inset-y-0 left-0 flex items-center px-3 pointer-events-none border-r bg-gray-50 rounded-l-md">
+                    <span className="text-gray-500">{formData.currency}</span>
+                  </div>
                 </div>
+                {errors.amount && (
+                  <p className="mt-1 text-sm text-error-500">{errors.amount}</p>
+                )}
+                <p className="mt-1 text-xs text-gray-500">
+                  Montant minimum: {MIN_AMOUNT} {formData.currency}
+                </p>
               </div>
-              {errors.amount && (
-                <p className="mt-1 text-sm text-error-500">{errors.amount}</p>
-              )}
+
+              <div className="form-control">
+                <label htmlFor="currency" className="form-label">
+                  Devise <span className="text-error-500">*</span>
+                </label>
+                <select
+                  id="currency"
+                  name="currency"
+                  value={formData.currency}
+                  onChange={handleInputChange}
+                  className="form-input"
+                >
+                  {SUPPORTED_CURRENCIES.map(currency => (
+                    <option key={currency} value={currency}>
+                      {currency}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
             
-            {/* Description */}
             <div className="form-control">
               <label htmlFor="description" className="form-label">
                 Description <span className="text-error-500">*</span>

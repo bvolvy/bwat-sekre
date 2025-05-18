@@ -13,6 +13,7 @@ export interface Client {
   profileImage: string;
   createdAt: string;
   totalBalance: number;
+  currency: string;
 }
 
 export interface Transaction {
@@ -23,6 +24,7 @@ export interface Transaction {
   description: string;
   date: string;
   status: 'pending' | 'completed' | 'failed';
+  currency: string;
 }
 
 export interface Loan {
@@ -38,6 +40,7 @@ export interface Loan {
   purpose: string;
   remainingBalance: number;
   payments: LoanPayment[];
+  currency: string;
 }
 
 export interface LoanPayment {
@@ -58,3 +61,6 @@ export interface ReportFilter {
   category: ReportCategory;
   clientId?: string;
 }
+
+export const SUPPORTED_CURRENCIES = ['HTG', 'USD'] as const;
+export type Currency = typeof SUPPORTED_CURRENCIES[number];
