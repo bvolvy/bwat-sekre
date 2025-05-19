@@ -78,34 +78,73 @@ const LoanDetails = () => {
   const generatePDF = () => {
     const doc = new jsPDF();
     
-    // Add title
+    // Add header
     doc.setFontSize(20);
-    doc.text('Détails du Prêt', 105, 20, { align: 'center' });
+    doc.setTextColor(10, 36, 99);
+    doc.text('Bwat Sekrè', 105, 20, { align: 'center' });
+    
+    // Add horizontal line under header
+    doc.setDrawColor(10, 36, 99);
+    doc.setLineWidth(0.5);
+    doc.line(20, 25, 190, 25);
+    
+    // Add title
+    doc.setFontSize(16);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Détails du Prêt', 105, 40, { align: 'center' });
     
     // Add loan details
-    doc.setFontSize(14);
-    doc.text(`Client: ${client.firstName} ${client.lastName}`, 20, 40);
-    doc.text(`ID du Prêt: ${loan.id}`, 20, 50);
-    doc.text(`Montant: ${formatCurrency(loan.amount)}`, 20, 60);
-    doc.text(`Taux d'Intérêt: ${loan.interestRate}%`, 20, 70);
-    doc.text(`Durée: ${loan.term} mois`, 20, 80);
-    doc.text(`Objectif: ${loan.purpose}`, 20, 90);
-    doc.text(`Statut: ${loan.status}`, 20, 100);
-    doc.text(`Solde Restant: ${formatCurrency(loan.remainingBalance)}`, 20, 110);
+    doc.setFontSize(12);
+    doc.text(`Client: ${client.firstName} ${client.lastName}`, 20, 60);
+    doc.text(`ID du Prêt: ${loan.id}`, 20, 70);
+    doc.text(`Montant: ${formatCurrency(loan.amount)}`, 20, 80);
+    doc.text(`Taux d'Intérêt: ${loan.interestRate}%`, 20, 90);
+    doc.text(`Durée: ${loan.term} mois`, 20, 100);
+    doc.text(`Objectif: ${loan.purpose}`, 20, 110);
+    doc.text(`Statut: ${loan.status}`, 20, 120);
+    doc.text(`Solde Restant: ${formatCurrency(loan.remainingBalance)}`, 20, 130);
     
     // Add payments table
     if (loan.payments.length > 0) {
-      doc.text('Historique des Paiements', 20, 130);
+      doc.text('Historique des Paiements', 20, 150);
       
       // @ts-ignore
       doc.autoTable({
-        startY: 140,
+        startY: 160,
         head: [['Date', 'Montant', 'Statut']],
         body: loan.payments.map(payment => [
           format(new Date(payment.date), 'dd/MM/yyyy'),
           formatCurrency(payment.amount),
           payment.status
         ]),
+        didDrawPage: function(data) {
+          // Header
+          doc.setFontSize(20);
+          doc.setTextColor(10, 36, 99);
+          doc.text('Bwat Sekrè', 105, 20, { align: 'center' });
+          doc.setDrawColor(10, 36, 99);
+          doc.setLineWidth(0.5);
+          doc.line(20, 25, 190, 25);
+          
+          // Footer
+          const pageHeight = doc.internal.pageSize.height;
+          doc.setDrawColor(10, 36, 99);
+          doc.line(20, pageHeight - 25, 190, pageHeight - 25);
+          doc.setFontSize(10);
+          doc.setTextColor(0, 0, 0);
+          doc.text(
+            `Page ${data.pageNumber} sur ${doc.getNumberOfPages()}`,
+            105,
+            pageHeight - 30,
+            { align: 'center' }
+          );
+          doc.text(
+            '© Bwat Sekrè | Made by Volvy Bazile',
+            105,
+            pageHeight - 15,
+            { align: 'center' }
+          );
+        }
       });
     }
     
