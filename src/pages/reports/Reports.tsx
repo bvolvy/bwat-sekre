@@ -154,6 +154,20 @@ const Reports = () => {
   // Generate PDF report
   const generatePDF = () => {
     const doc = new jsPDF();
+    
+    // Add header with logo and company name
+    doc.setFontSize(20);
+    doc.setTextColor(10, 36, 99); // Primary color
+    doc.text('Bwat Sekrè', 105, 20, { align: 'center' });
+    
+    // Add horizontal line under header
+    doc.setDrawColor(10, 36, 99);
+    doc.setLineWidth(0.5);
+    doc.line(20, 25, 190, 25);
+    
+    // Add title
+    doc.setFontSize(16);
+    doc.setTextColor(0, 0, 0);
     const title = `Rapport ${
       reportSettings.type === 'daily' ? 'Quotidien' : 
       reportSettings.type === 'monthly' ? 'Mensuel' : 'Annuel'
@@ -161,37 +175,38 @@ const Reports = () => {
       reportSettings.category === 'transactions' ? 'Transactions' :
       reportSettings.category === 'clients' ? 'Clients' : 'Prêts'
     }`;
-    
-    // Add title
-    doc.setFontSize(20);
-    doc.text(title, 105, 20, { align: 'center' });
+    doc.text(title, 105, 40, { align: 'center' });
     
     // Add period
     doc.setFontSize(12);
-    doc.text(`Période: ${format(new Date(reportSettings.startDate), 'dd/MM/yyyy')} - ${format(new Date(reportSettings.endDate), 'dd/MM/yyyy')}`, 105, 30, { align: 'center' });
+    doc.text(`Période: ${format(new Date(reportSettings.startDate), 'dd/MM/yyyy')} - ${format(new Date(reportSettings.endDate), 'dd/MM/yyyy')}`, 105, 50, { align: 'center' });
     
     // Add generated date
     doc.setFontSize(10);
-    doc.text(`Généré le: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 105, 38, { align: 'center' });
+    doc.text(`Généré le: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 105, 58, { align: 'center' });
     
     // Add summary based on category
     doc.setFontSize(14);
-    doc.text('Résumé', 20, 50);
+    doc.text('Résumé', 20, 70);
+    
+    let startY = 80;
     
     if (reportSettings.category === 'transactions') {
       doc.setFontSize(12);
-      doc.text(`Nombre total de transactions: ${summary.totalTransactions}`, 20, 60);
-      doc.text(`Total des dépôts: ${formatCurrency(summary.depositsTotal)}`, 20, 70);
-      doc.text(`Total des retraits: ${formatCurrency(summary.withdrawalsTotal)}`, 20, 80);
-      doc.text(`Bilan net: ${formatCurrency(summary.depositsTotal - summary.withdrawalsTotal)}`, 20, 90);
+      doc.text(`Nombre total de transactions: ${summary.totalTransactions}`, 20, startY);
+      doc.text(`Total des dépôts: ${formatCurrency(summary.depositsTotal)}`, 20, startY + 10);
+      doc.text(`Total des retraits: ${formatCurrency(summary.withdrawalsTotal)}`, 20, startY + 20);
+      doc.text(`Bilan net: ${formatCurrency(summary.depositsTotal - summary.withdrawalsTotal)}`, 20, startY + 30);
+      
+      startY = startY + 50;
       
       // Add transactions table
       if (filteredData.length > 0) {
-        doc.text('Détails des Transactions', 20, 110);
+        doc.text('Détails des Transactions', 20, startY);
         
         // @ts-ignore
         doc.autoTable({
-          startY: 120,
+          startY: startY + 10,
           head: [['Date', 'Client', 'Type', 'Montant', 'Description']],
           body: (filteredData as any[]).map(t => {
             const client = clients.find(c => c.id === t.clientId);
@@ -203,21 +218,51 @@ const Reports = () => {
               t.description
             ];
           }),
+          didDrawPage: function(data) {
+            // Header
+            doc.setFontSize(20);
+            doc.setTextColor(10, 36, 99);
+            doc.text('Bwat Sekrè', 105, 20, { align: 'center' });
+            doc.setDrawColor(10, 36, 99);
+            doc.setLineWidth(0.5);
+            doc.line(20, 25, 190, 25);
+            
+            // Footer
+            const pageHeight = doc.internal.pageSize.height;
+            doc.setDrawColor(10, 36, 99);
+            doc.line(20, pageHeight - 25, 190, pageHeight - 25);
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            doc.text(
+              `Page ${data.pageNumber} sur ${doc.getNumberOfPages()}`,
+              105,
+              pageHeight - 30,
+              { align: 'center' }
+            );
+            doc.text(
+              '© Bwat Sekrè | Made by Volvy Bazile',
+              105,
+              pageHeight - 15,
+              { align: 'center' }
+            );
+          }
         });
       }
       
     } else if (reportSettings.category === 'clients') {
       doc.setFontSize(12);
-      doc.text(`Nombre total de clients: ${summary.totalClients}`, 20, 60);
-      doc.text(`Solde total des comptes: ${formatCurrency(summary.totalBalance)}`, 20, 70);
+      doc.text(`Nombre total de clients: ${summary.totalClients}`, 20, startY);
+      doc.text(`Solde total des comptes: ${formatCurrency(summary.totalBalance)}`, 20, startY + 10);
+      
+      startY = startY + 30;
       
       // Add clients table
       if (filteredData.length > 0) {
-        doc.text('Liste des Clients', 20, 90);
+        doc.text('Liste des Clients', 20, startY);
         
         // @ts-ignore
         doc.autoTable({
-          startY: 100,
+          startY: startY + 10,
           head: [['ID', 'Nom', 'Email', 'Téléphone', 'Solde']],
           body: (filteredData as any[]).map(client => [
             client.id,
@@ -226,22 +271,51 @@ const Reports = () => {
             client.phoneNumber,
             formatCurrency(client.totalBalance)
           ]),
+          didDrawPage: function(data) {
+            // Header
+            doc.setFontSize(20);
+            doc.setTextColor(10, 36, 99);
+            doc.text('Bwat Sekrè', 105, 20, { align: 'center' });
+            doc.setDrawColor(10, 36, 99);
+            doc.setLineWidth(0.5);
+            doc.line(20, 25, 190, 25);
+            
+            // Footer
+            const pageHeight = doc.internal.pageSize.height;
+            doc.setDrawColor(10, 36, 99);
+            doc.line(20, pageHeight - 25, 190, pageHeight - 25);
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            doc.text(
+              `Page ${data.pageNumber} sur ${doc.getNumberOfPages()}`,
+              105,
+              pageHeight - 30,
+              { align: 'center' }
+            );
+            doc.text(
+              '© Bwat Sekrè | Made by Volvy Bazile',
+              105,
+              pageHeight - 15,
+              { align: 'center' }
+            );
+          }
         });
       }
-      
     } else if (reportSettings.category === 'loans') {
       doc.setFontSize(12);
-      doc.text(`Nombre total de prêts actifs: ${summary.totalActiveLoans}`, 20, 60);
-      doc.text(`Montant total des prêts: ${formatCurrency(summary.totalLoanAmount)}`, 20, 70);
-      doc.text(`Solde restant total: ${formatCurrency(summary.totalRemainingBalance)}`, 20, 80);
+      doc.text(`Nombre total de prêts actifs: ${summary.totalActiveLoans}`, 20, startY);
+      doc.text(`Montant total des prêts: ${formatCurrency(summary.totalLoanAmount)}`, 20, startY + 10);
+      doc.text(`Solde restant total: ${formatCurrency(summary.totalRemainingBalance)}`, 20, startY + 20);
+      
+      startY = startY + 40;
       
       // Add loans table
       if (filteredData.length > 0) {
-        doc.text('Liste des Prêts', 20, 100);
+        doc.text('Liste des Prêts', 20, startY);
         
         // @ts-ignore
         doc.autoTable({
-          startY: 110,
+          startY: startY + 10,
           head: [['Date', 'Client', 'Montant', 'Statut', 'Solde Restant']],
           body: (filteredData as any[]).map(loan => {
             const client = clients.find(c => c.id === loan.clientId);
@@ -253,28 +327,43 @@ const Reports = () => {
               formatCurrency(loan.remainingBalance)
             ];
           }),
+          didDrawPage: function(data) {
+            // Header
+            doc.setFontSize(20);
+            doc.setTextColor(10, 36, 99);
+            doc.text('Bwat Sekrè', 105, 20, { align: 'center' });
+            doc.setDrawColor(10, 36, 99);
+            doc.setLineWidth(0.5);
+            doc.line(20, 25, 190, 25);
+            
+            // Footer
+            const pageHeight = doc.internal.pageSize.height;
+            doc.setDrawColor(10, 36, 99);
+            doc.line(20, pageHeight - 25, 190, pageHeight - 25);
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            doc.text(
+              `Page ${data.pageNumber} sur ${doc.getNumberOfPages()}`,
+              105,
+              pageHeight - 30,
+              { align: 'center' }
+            );
+            doc.text(
+              '© Bwat Sekrè | Made by Volvy Bazile',
+              105,
+              pageHeight - 15,
+              { align: 'center' }
+            );
+          }
         });
       }
-    }
-    
-    // Footer
-    const pageCount = doc.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(10);
-      doc.text(
-        `Page ${i} sur ${pageCount} - Volvy Bank`,
-        105,
-        doc.internal.pageSize.height - 10,
-        { align: 'center' }
-      );
     }
     
     // Save the PDF
     const fileName = `volvy-bank-rapport-${reportSettings.category}-${format(new Date(), 'yyyyMMdd_HHmmss')}.pdf`;
     doc.save(fileName);
   };
-  
+
   return (
     <div className="space-y-6 animate-fade-in">
       <h1 className="text-2xl font-bold text-gray-800">Rapports</h1>
@@ -604,7 +693,8 @@ const Reports = () => {
                         <td className={`px-4 py-3 whitespace-nowrap text-sm font-medium text-right ${
                           transaction.type === 'deposit' ? 'text-success-600' : 'text-error-600'
                         }`}>
-                          {transaction.type === 'deposit' ? '+' : '-'} {formatCurrency(transaction.amount)}
+                          {transaction.type === 
+                          'deposit' ? '+' : '-'} {formatCurrency(transaction.amount)}
                         </td>
                       </tr>
                     );
@@ -687,7 +777,6 @@ const Reports = () => {
                 )}
               </tbody>
             </table>
-          
           )}
           
           {reportSettings.category === 'loans' && (

@@ -91,26 +91,37 @@ const ClientDetails = () => {
   const generatePDF = () => {
     const doc = new jsPDF();
     
-    // Add title
+    // Add header
     doc.setFontSize(20);
-    doc.text('Détails du Client', 105, 20, { align: 'center' });
+    doc.setTextColor(10, 36, 99);
+    doc.text('Bwat Sekrè', 105, 20, { align: 'center' });
+    
+    // Add horizontal line under header
+    doc.setDrawColor(10, 36, 99);
+    doc.setLineWidth(0.5);
+    doc.line(20, 25, 190, 25);
+    
+    // Add title
+    doc.setFontSize(16);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Détails du Client', 105, 40, { align: 'center' });
     
     // Add client details
-    doc.setFontSize(14);
-    doc.text(`Nom: ${client.firstName} ${client.lastName}`, 20, 40);
-    doc.text(`ID: ${client.id}`, 20, 50);
-    doc.text(`Email: ${client.email}`, 20, 60);
-    doc.text(`Téléphone: ${client.phoneNumber}`, 20, 70);
-    doc.text(`Adresse: ${client.address}`, 20, 80);
-    doc.text(`Solde: ${formatCurrency(client.totalBalance)}`, 20, 90);
+    doc.setFontSize(12);
+    doc.text(`Nom: ${client.firstName} ${client.lastName}`, 20, 60);
+    doc.text(`ID: ${client.id}`, 20, 70);
+    doc.text(`Email: ${client.email}`, 20, 80);
+    doc.text(`Téléphone: ${client.phoneNumber}`, 20, 90);
+    doc.text(`Adresse: ${client.address}`, 20, 100);
+    doc.text(`Solde: ${formatCurrency(client.totalBalance)}`, 20, 110);
     
     // Add transactions
     if (clientTransactions.length > 0) {
-      doc.text('Transactions récentes', 20, 110);
+      doc.text('Transactions récentes', 20, 130);
       
       // @ts-ignore
       doc.autoTable({
-        startY: 120,
+        startY: 140,
         head: [['Date', 'Type', 'Montant', 'Description']],
         body: clientTransactions.map(t => [
           format(new Date(t.date), 'dd/MM/yyyy'),
@@ -118,6 +129,34 @@ const ClientDetails = () => {
           formatCurrency(t.amount),
           t.description
         ]),
+        didDrawPage: function(data) {
+          // Header
+          doc.setFontSize(20);
+          doc.setTextColor(10, 36, 99);
+          doc.text('Bwat Sekrè', 105, 20, { align: 'center' });
+          doc.setDrawColor(10, 36, 99);
+          doc.setLineWidth(0.5);
+          doc.line(20, 25, 190, 25);
+          
+          // Footer
+          const pageHeight = doc.internal.pageSize.height;
+          doc.setDrawColor(10, 36, 99);
+          doc.line(20, pageHeight - 25, 190, pageHeight - 25);
+          doc.setFontSize(10);
+          doc.setTextColor(0, 0, 0);
+          doc.text(
+            `Page ${data.pageNumber} sur ${doc.getNumberOfPages()}`,
+            105,
+            pageHeight - 30,
+            { align: 'center' }
+          );
+          doc.text(
+            '© Bwat Sekrè | Made by Volvy Bazile',
+            105,
+            pageHeight - 15,
+            { align: 'center' }
+          );
+        }
       });
     }
     
@@ -137,6 +176,34 @@ const ClientDetails = () => {
           loan.status,
           formatCurrency(loan.remainingBalance)
         ]),
+        didDrawPage: function(data) {
+          // Header
+          doc.setFontSize(20);
+          doc.setTextColor(10, 36, 99);
+          doc.text('Bwat Sekrè', 105, 20, { align: 'center' });
+          doc.setDrawColor(10, 36, 99);
+          doc.setLineWidth(0.5);
+          doc.line(20, 25, 190, 25);
+          
+          // Footer
+          const pageHeight = doc.internal.pageSize.height;
+          doc.setDrawColor(10, 36, 99);
+          doc.line(20, pageHeight - 25, 190, pageHeight - 25);
+          doc.setFontSize(10);
+          doc.setTextColor(0, 0, 0);
+          doc.text(
+            `Page ${data.pageNumber} sur ${doc.getNumberOfPages()}`,
+            105,
+            pageHeight - 30,
+            { align: 'center' }
+          );
+          doc.text(
+            '© Bwat Sekrè | Made by Volvy Bazile',
+            105,
+            pageHeight - 15,
+            { align: 'center' }
+          );
+        }
       });
     }
     
