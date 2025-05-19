@@ -1,3 +1,5 @@
+import { type } from "os";
+
 export interface Account {
   id: string;
   accountNumber: string;
@@ -28,12 +30,14 @@ export interface Transaction {
   id: string;
   clientId: string;
   accountId: string;
-  type: 'deposit' | 'withdrawal';
+  type: 'deposit' | 'withdrawal' | 'transfer';
   amount: number;
   description: string;
   date: string;
   status: 'pending' | 'completed' | 'failed';
   currency: string;
+  recipientAccountId?: string; // For transfers
+  recipientClientId?: string; // For transfers
 }
 
 export interface Loan {

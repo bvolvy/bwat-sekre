@@ -14,6 +14,7 @@ import AddClient from './pages/clients/AddClient';
 import EditClient from './pages/clients/EditClient';
 import TransactionList from './pages/transactions/TransactionList';
 import AddTransaction from './pages/transactions/AddTransaction';
+import TransferFunds from './pages/transactions/TransferFunds';
 import LoanList from './pages/loans/LoanList';
 import AddLoan from './pages/loans/AddLoan';
 import LoanDetails from './pages/loans/LoanDetails';
@@ -45,6 +46,7 @@ function App() {
                 <Route path="transactions">
                   <Route index element={<TransactionList />} />
                   <Route path="add" element={<AddTransaction />} />
+                  <Route path="transfer" element={<TransferFunds />} />
                 </Route>
                 <Route path="loans">
                   <Route index element={<LoanList />} />

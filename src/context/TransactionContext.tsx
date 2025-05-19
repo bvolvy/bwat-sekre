@@ -13,6 +13,15 @@ interface TransactionContextProps {
   getClientTransactions: (clientId: string) => Transaction[];
   addTransaction: (transaction: Omit<Transaction, 'id' | 'date' | 'status'>) => void;
   deleteTransaction: (id: string) => void;
+  transferFunds: (params: {
+    fromClientId: string;
+    fromAccountId: string;
+    toClientId: string;
+    toAccountId: string;
+    amount: number;
+    description: string;
+    currency: string;
+  }) => void;
 }
 
 const TransactionContext = createContext<TransactionContextProps | undefined>(undefined);
@@ -78,6 +87,56 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
     toast.success(`${newTransaction.type === 'deposit' ? 'Dépôt' : 'Retrait'} effectué avec succès!`);
   };
 
+  const transferFunds = (params: {
+    fromClientId: string;
+    fromAccountId: string;
+    toClientId: string;
+    toAccountId: string;
+    amount: number;
+    description: string;
+    currency: string;
+  }) => {
+    const { fromClientId, fromAccountId, toClientId, toAccountId, amount, description, currency } = params;
+
+    // Create withdrawal transaction for sender
+    const withdrawalTransaction: Transaction = {
+      id: getNewId('t'),
+      clientId: fromClientId,
+      accountId: fromAccountId,
+      type: 'transfer',
+      amount,
+      description: `Transfert vers ${description}`,
+      date: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+      status: 'completed',
+      currency,
+      recipientAccountId: toAccountId,
+      recipientClientId: toClientId
+    };
+
+    // Create deposit transaction for recipient
+    const depositTransaction: Transaction = {
+      id: getNewId('t'),
+      clientId: toClientId,
+      accountId: toAccountId,
+      type: 'transfer',
+      amount,
+      description: `Transfert reçu de ${description}`,
+      date: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+      status: 'completed',
+      currency,
+      recipientAccountId: fromAccountId,
+      recipientClientId: fromClientId
+    };
+
+    setTransactions(prevTransactions => [...prevTransactions, withdrawalTransaction, depositTransaction]);
+
+    // Update balances
+    updateClientBalance(fromClientId, fromAccountId, amount, false); // Deduct from sender
+    updateClientBalance(toClientId, toAccountId, amount, true); // Add to recipient
+
+    toast.success('Transfert effectué avec succès!');
+  };
+
   const deleteTransaction = (id: string) => {
     const transaction = transactions.find(t => t.id === id);
     
@@ -107,7 +166,8 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
         getTransaction,
         getClientTransactions,
         addTransaction,
-        deleteTransaction
+        deleteTransaction,
+        transferFunds
       }}
     >
       {children}
