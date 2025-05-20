@@ -75,19 +75,7 @@ export interface ReportFilter {
   clientId?: string;
 }
 
-export const SUPPORTED_CURRENCIES = [
-  'HTG',
-  'USD',
-  'EUR',
-  'CAD',
-  'GBP',
-  'CHF',
-  'JPY',
-  'AUD',
-  'NZD',
-  'CNY'
-] as const;
-
+export const SUPPORTED_CURRENCIES = ['HTG', 'USD'] as const;
 export type Currency = typeof SUPPORTED_CURRENCIES[number];
 
 // Helper function to generate account numbers
