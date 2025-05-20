@@ -30,7 +30,7 @@ const AddTransaction = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   
   useEffect(() => {
-    document.title = formData.type === 'deposit' ? 'Nouveau Dépôt | Volvy Bank' : 'Nouveau Retrait | Volvy Bank';
+    document.title = formData.type === 'deposit' ? 'Nouveau Dépôt | Bwat Sekrè' : 'Nouveau Retrait | Bwat Sekrè';
     
     // Reset accountId when client changes (unless it was provided in initial state)
     if (formData.clientId && !initialAccountId) {
@@ -41,7 +41,7 @@ const AddTransaction = () => {
     }
     
     return () => {
-      document.title = 'Volvy Bank';
+      document.title = 'Bwat Sekrè';
     };
   }, [formData.type, formData.clientId, clients, initialAccountId]);
   
