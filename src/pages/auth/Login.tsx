@@ -179,7 +179,7 @@ const Login = () => {
               <div className="flex items-center">
                 <Lock className="h-5 w-5 text-primary-500 mr-2" />
                 <p className="text-sm text-gray-600">
-                  La gestion des comptes, accorde des prêts et facilite les transactions monétaires .
+                  La gestion des comptes, accorder des prêts et faciliter les transactions monétaires .
                 </p>
               </div>
             </div>
