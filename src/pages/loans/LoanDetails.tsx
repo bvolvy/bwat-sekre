@@ -139,7 +139,7 @@ const LoanDetails = () => {
             { align: 'center' }
           );
           doc.text(
-            '© Bwat Sekrè | Made by Volvy Bazile',
+            '© Bwat Sekrè',
             105,
             pageHeight - 15,
             { align: 'center' }
