@@ -9,20 +9,22 @@ import {
   LogOut, 
   ChevronLeft, 
   Menu, 
-  Bell
+  Bell,
+  Settings
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const navigate = useNavigate();
+  const { logout } = useAuth();
   
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
   
   const handleLogout = () => {
-    // Implement logout functionality
-    navigate('/login');
+    logout();
   };
   
   return (
@@ -120,6 +122,20 @@ const DashboardLayout = () => {
             <FileText size={20} />
             <span className={`ml-4 ${!sidebarOpen && 'md:hidden'}`}>Reports</span>
           </NavLink>
+
+          <NavLink 
+            to="/settings" 
+            className={({ isActive }) => 
+              `flex items-center px-4 py-2 mt-2 text-sm transition-colors duration-200 rounded-md ${
+                isActive 
+                  ? 'bg-primary-700 text-white' 
+                  : 'text-gray-300 hover:bg-primary-700'
+              }`
+            }
+          >
+            <Settings size={20} />
+            <span className={`ml-4 ${!sidebarOpen && 'md:hidden'}`}>Paramètres</span>
+          </NavLink>
         </nav>
         
         {/* Logout button */}
@@ -129,7 +145,7 @@ const DashboardLayout = () => {
             className="flex items-center w-full px-4 py-2 text-sm rounded-md text-gray-300 hover:bg-primary-700 hover:text-white transition-colors duration-200"
           >
             <LogOut size={20} />
-            <span className={`ml-4 ${!sidebarOpen && 'md:hidden'}`}>Logout</span>
+            <span className={`ml-4 ${!sidebarOpen && 'md:hidden'}`}>Déconnexion</span>
           </button>
         </div>
       </aside>

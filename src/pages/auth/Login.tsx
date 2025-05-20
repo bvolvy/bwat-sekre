@@ -1,21 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PiggyBank, Lock } from 'lucide-react';
+import { PiggyBank, Lock, Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login, isAuthenticated } = useAuth();
   const [credentials, setCredentials] = useState({
     email: '',
     password: ''
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setCredentials(prev => ({ ...prev, [name]: value }));
     
-    // Clear error when field is edited
     if (errors[name]) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -42,18 +50,21 @@ const Login = () => {
     return Object.keys(newErrors).length === 0;
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (validateForm()) {
       setIsLoading(true);
+      const success = await login(credentials.email, credentials.password);
       
-      // Simulate API call
-      setTimeout(() => {
-        // For demo purposes, let's accept any credentials
+      if (success) {
         navigate('/');
-        setIsLoading(false);
-      }, 1000);
+      } else {
+        setErrors({
+          auth: 'Email ou mot de passe incorrect'
+        });
+      }
+      setIsLoading(false);
     }
   };
   
@@ -103,44 +114,41 @@ const Login = () => {
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Mot de Passe
               </label>
-              <div className="mt-1">
+              <div className="mt-1 relative">
                 <input
                   id="password"
                   name="password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   required
                   value={credentials.password}
                   onChange={handleInputChange}
                   className={`appearance-none block w-full px-3 py-2 border ${
                     errors.password ? 'border-error-300' : 'border-gray-300'
-                  } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm`}
+                  } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm pr-10`}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  {showPassword ? (
+                    <EyeOff size={20} className="text-gray-400" />
+                  ) : (
+                    <Eye size={20} className="text-gray-400" />
+                  )}
+                </button>
               </div>
               {errors.password && (
                 <p className="mt-2 text-sm text-error-600">{errors.password}</p>
               )}
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember_me"
-                  name="remember_me"
-                  type="checkbox"
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                />
-                <label htmlFor="remember_me" className="ml-2 block text-sm text-gray-900">
-                  Se souvenir de moi
-                </label>
+            {errors.auth && (
+              <div className="bg-error-50 text-error-700 p-3 rounded-md">
+                {errors.auth}
               </div>
-
-              <div className="text-sm">
-                <a href="#" className="font-medium text-primary-600 hover:text-primary-500">
-                  Mot de passe oublié?
-                </a>
-              </div>
-            </div>
+            )}
 
             <div>
               <button
@@ -170,7 +178,7 @@ const Login = () => {
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="px-2 bg-white text-gray-500">
-                 © Bwat Sekrè | V. Bazile
+                 © Bwat Sekrè
                 </span>
               </div>
             </div>
@@ -179,7 +187,7 @@ const Login = () => {
               <div className="flex items-center">
                 <Lock className="h-5 w-5 text-primary-500 mr-2" />
                 <p className="text-sm text-gray-600">
-                  Gérer vos comptes, accorder des prêts et faciliter les transactions monétaires .
+                  Gérer vos comptes, accorder des prêts et faciliter les transactions monétaires.
                 </p>
               </div>
             </div>
