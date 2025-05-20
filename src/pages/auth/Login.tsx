@@ -170,7 +170,7 @@ const Login = () => {
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="px-2 bg-white text-gray-500">
-                  Demo Mode
+                  Bwat Sekrè
                 </span>
               </div>
             </div>
@@ -179,7 +179,7 @@ const Login = () => {
               <div className="flex items-center">
                 <Lock className="h-5 w-5 text-primary-500 mr-2" />
                 <p className="text-sm text-gray-600">
-                  Pour la démo, vous pouvez vous connecter avec n'importe quelles informations d'identification.
+                  Bwat Sekrè | la gestion des comptes, accorde des prêts et facilite les transactions monétaires ....
                 </p>
               </div>
             </div>
