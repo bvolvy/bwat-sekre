@@ -69,7 +69,7 @@ const Login = () => {
           Bwat Sekrè
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Système de Gestion d'Argents
+          Système de Gestion Bancaire
         </p>
       </div>
 
