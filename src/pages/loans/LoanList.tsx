@@ -212,7 +212,7 @@ const LoanList = () => {
                               {client ? `${client.firstName} ${client.lastName}` : 'Client Inconnu'}
                             </div>
                             <div className="text-xs text-gray-500">
-                              {client?.accounts[0]?.accountNumber || 'N/A'}
+                              {client?.accounts?.[0]?.accountNumber || 'N/A'}
                             </div>
                           </div>
                         </div>
