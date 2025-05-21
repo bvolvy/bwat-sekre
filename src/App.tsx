@@ -12,6 +12,7 @@ import ClientList from './pages/clients/ClientList';
 import ClientDetails from './pages/clients/ClientDetails';
 import AddClient from './pages/clients/AddClient';
 import EditClient from './pages/clients/EditClient';
+import ImportClients from './pages/clients/ImportClients';
 import TransactionList from './pages/transactions/TransactionList';
 import AddTransaction from './pages/transactions/AddTransaction';
 import TransferFunds from './pages/transactions/TransferFunds';
@@ -51,6 +52,7 @@ function App() {
                   <Route path="clients">
                     <Route index element={<ClientList />} />
                     <Route path="add" element={<AddClient />} />
+                    <Route path="import" element={<ImportClients />} />
                     <Route path=":id" element={<ClientDetails />} />
                     <Route path=":id/edit" element={<EditClient />} />
                   </Route>
