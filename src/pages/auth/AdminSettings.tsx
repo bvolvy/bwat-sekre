@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Eye, EyeOff, Save, Download, Upload, AlertCircle, User } from 'lucide-react';
+import { Eye, EyeOff, Save, Download, Upload, AlertCircle, User, Trash2 } from 'lucide-react';
 import { useClients } from '../../context/ClientContext';
 import { useTransactions } from '../../context/TransactionContext';
 import { useLoans } from '../../context/LoanContext';
+import { useNavigate } from 'react-router-dom';
 
 const AdminSettings = () => {
-  const { updatePassword, updateAdminName, adminName } = useAuth();
+  const navigate = useNavigate();
+  const { updatePassword, updateAdminName, adminName, logout } = useAuth();
   const { clients } = useClients();
   const { transactions } = useTransactions();
   const { loans } = useLoans();
@@ -15,13 +17,17 @@ const AdminSettings = () => {
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
-    adminName: adminName
+    adminName: adminName,
+    confirmSiteName: ''
   });
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [restoreError, setRestoreError] = useState('');
+  const [showResetModal, setShowResetModal] = useState(false);
+
+  const SITE_NAME = 'Bwat Sekrè';
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -58,7 +64,8 @@ const AdminSettings = () => {
         currentPassword: '',
         newPassword: '',
         confirmPassword: '',
-        adminName: formData.adminName
+        adminName: formData.adminName,
+        confirmSiteName: ''
       });
     } else {
       setError('Mot de passe actuel incorrect');
@@ -118,6 +125,25 @@ const AdminSettings = () => {
       }
     };
     reader.readAsText(file);
+  };
+
+  const handleReset = () => {
+    if (formData.confirmSiteName !== SITE_NAME) {
+      setError('Le nom du site ne correspond pas');
+      return;
+    }
+
+    // Clear all data
+    localStorage.removeItem('volvy-bank-clients');
+    localStorage.removeItem('volvy-bank-transactions');
+    localStorage.removeItem('volvy-bank-loans');
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('adminCredentials');
+
+    // Close modal and logout
+    setShowResetModal(false);
+    logout();
+    navigate('/login');
   };
 
   return (
@@ -312,7 +338,93 @@ const AdminSettings = () => {
             </div>
           </div>
         </div>
+
+        {/* Danger Zone */}
+        <div className="bg-error-50 rounded-lg shadow-md p-6 md:col-span-2 border-2 border-error-200">
+          <h2 className="text-lg font-semibold text-error-800 mb-4 flex items-center">
+            <AlertCircle size={24} className="mr-2 text-error-600" />
+            Zone Dangereuse
+          </h2>
+          
+          <div className="space-y-4">
+            <p className="text-sm text-error-700">
+              Cette action supprimera définitivement toutes les données de l'application, y compris les clients, 
+              les transactions et les prêts. Cette action est irréversible.
+            </p>
+            
+            <button
+              onClick={() => setShowResetModal(true)}
+              className="btn bg-error-600 text-white hover:bg-error-700 w-full flex items-center justify-center"
+            >
+              <Trash2 size={20} className="mr-2" />
+              Réinitialiser toutes les données
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* Reset Confirmation Modal */}
+      {showResetModal && (
+        <div className="fixed z-10 inset-0 overflow-y-auto">
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="sm:flex sm:items-start">
+                  <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-error-100 sm:mx-0 sm:h-10 sm:w-10">
+                    <AlertCircle className="h-6 w-6 text-error-600" />
+                  </div>
+                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900">
+                      Réinitialiser toutes les données
+                    </h3>
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-500">
+                        Cette action supprimera définitivement toutes les données. Pour confirmer, 
+                        veuillez écrire <span className="font-bold">{SITE_NAME}</span> ci-dessous.
+                      </p>
+                      <input
+                        type="text"
+                        name="confirmSiteName"
+                        value={formData.confirmSiteName}
+                        onChange={handleInputChange}
+                        className="mt-4 form-input w-full"
+                        placeholder="Entrez le nom du site"
+                      />
+                      {error && (
+                        <p className="mt-2 text-sm text-error-600">{error}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button
+                  type="button"
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-error-600 text-base font-medium text-white hover:bg-error-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-error-500 sm:ml-3 sm:w-auto sm:text-sm"
+                  onClick={handleReset}
+                >
+                  Réinitialiser
+                </button>
+                <button
+                  type="button"
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  onClick={() => {
+                    setShowResetModal(false);
+                    setFormData(prev => ({ ...prev, confirmSiteName: '' }));
+                    setError('');
+                  }}
+                >
+                  Annuler
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
