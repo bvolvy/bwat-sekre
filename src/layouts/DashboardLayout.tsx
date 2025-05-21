@@ -17,7 +17,7 @@ import { useAuth } from '../context/AuthContext';
 const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, adminName } = useAuth();
   
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -167,9 +167,9 @@ const DashboardLayout = () => {
             </button>
             <div className="flex items-center">
               <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-semibold">
-                BS
+                {adminName.charAt(0)}
               </div>
-              <span className="ml-2 text-sm font-medium text-gray-700">Admin</span>
+              <span className="ml-2 text-sm font-medium text-gray-700">{adminName}</span>
             </div>
           </div>
         </header>

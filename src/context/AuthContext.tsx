@@ -3,26 +3,33 @@ import { useNavigate } from 'react-router-dom';
 
 interface AuthContextProps {
   isAuthenticated: boolean;
+  adminName: string;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   updatePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
+  updateAdminName: (name: string) => void;
 }
 
 interface AdminCredentials {
   email: string;
   password: string;
+  name: string;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [adminName, setAdminName] = useState('Admin');
   const navigate = useNavigate();
 
   useEffect(() => {
     const authStatus = localStorage.getItem('isAuthenticated');
     if (authStatus === 'true') {
       setIsAuthenticated(true);
+      // Load admin name from credentials
+      const credentials = getStoredCredentials();
+      setAdminName(credentials.name);
     }
   }, []);
 
@@ -34,7 +41,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Default credentials
     return {
       email: 'admin@bwatsekre.com',
-      password: 'Admin@123!'
+      password: 'Admin@123!',
+      name: 'Admin'
     };
   };
 
@@ -43,6 +51,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     if (email === credentials.email && password === credentials.password) {
       setIsAuthenticated(true);
+      setAdminName(credentials.name);
       localStorage.setItem('isAuthenticated', 'true');
       return true;
     }
@@ -69,8 +78,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return false;
   };
 
+  const updateAdminName = (name: string) => {
+    const credentials = getStoredCredentials();
+    const updatedCredentials = {
+      ...credentials,
+      name
+    };
+    localStorage.setItem('adminCredentials', JSON.stringify(updatedCredentials));
+    setAdminName(name);
+  };
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout, updatePassword }}>
+    <AuthContext.Provider value={{ 
+      isAuthenticated, 
+      adminName,
+      login, 
+      logout, 
+      updatePassword,
+      updateAdminName 
+    }}>
       {children}
     </AuthContext.Provider>
   );
