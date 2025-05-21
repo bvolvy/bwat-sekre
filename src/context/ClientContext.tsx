@@ -33,7 +33,7 @@ export const ClientProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           // Calculate total balance for each client from their accounts
           const clientsWithTotalBalance = mockClients.map(client => ({
             ...client,
-            totalBalance: client.accounts.reduce((sum, account) => sum + account.balance, 0)
+            totalBalance: (client.accounts || []).reduce((sum, account) => sum + account.balance, 0)
           }));
           setClients(clientsWithTotalBalance);
         }
@@ -88,7 +88,7 @@ export const ClientProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       prevClients.map(client => {
         if (client.id === id) {
           // Update specific account balance
-          const updatedAccounts = client.accounts.map(account => {
+          const updatedAccounts = (client.accounts || []).map(account => {
             if (account.id === accountId) {
               return {
                 ...account,
