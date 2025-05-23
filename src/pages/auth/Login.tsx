@@ -187,7 +187,7 @@ const Login = () => {
               <div className="flex items-center">
                 <Lock className="h-5 w-5 text-primary-500 mr-2" />
                 <p className="text-sm text-gray-600">
-                  Gérer vos comptes, accorder des prêts et faciliter les transactions monétaires.
+                  Gérer vos comptes, faciliter des transactions monétaires et accorder des prêts.
                 </p>
               </div>
             </div>
