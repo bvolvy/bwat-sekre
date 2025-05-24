@@ -188,7 +188,7 @@ const Login = () => {
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="px-2 bg-white text-gray-500">
-                 © Bwat Sekrè | 2025
+                 Système de Gestion Bancaire
                 </span>
               </div>
             </div>
