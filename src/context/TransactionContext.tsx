@@ -12,7 +12,7 @@ interface TransactionContextProps {
   error: string | null;
   getTransaction: (id: string) => Transaction | undefined;
   getClientTransactions: (clientId: string) => Transaction[];
-  addTransaction: (transaction: Omit<Transaction, 'id' | 'date' | 'status' | 'organizationId'>) => void;
+  addTransaction: (transaction: Omit<Transaction, 'id' | 'date' | 'status' | 'organizationId' | 'currency'>) => void;
   deleteTransaction: (id: string) => void;
   transferFunds: (params: {
     fromClientId: string;
@@ -21,7 +21,6 @@ interface TransactionContextProps {
     toAccountId: string;
     amount: number;
     description: string;
-    currency: string;
   }) => void;
 }
 
@@ -45,7 +44,8 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
         } else {
           const initialTransactions = mockTransactions.map(transaction => ({
             ...transaction,
-            organizationId: currentOrganization?.id || ''
+            organizationId: currentOrganization?.id || '',
+            currency: currentOrganization?.defaultCurrency || 'HTG'
           }));
           setTransactions(initialTransactions);
         }
@@ -76,7 +76,7 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
     );
   };
 
-  const addTransaction = (transaction: Omit<Transaction, 'id' | 'date' | 'status' | 'organizationId'>) => {
+  const addTransaction = (transaction: Omit<Transaction, 'id' | 'date' | 'status' | 'organizationId' | 'currency'>) => {
     if (!currentOrganization?.id) return;
 
     const newTransaction: Transaction = {
@@ -85,6 +85,7 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
       organizationId: currentOrganization.id,
       date: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
       status: 'completed',
+      currency: currentOrganization.defaultCurrency
     };
 
     setTransactions(prevTransactions => [...prevTransactions, newTransaction]);
@@ -107,11 +108,10 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
     toAccountId: string;
     amount: number;
     description: string;
-    currency: string;
   }) => {
     if (!currentOrganization?.id) return;
 
-    const { fromClientId, fromAccountId, toClientId, toAccountId, amount, description, currency } = params;
+    const { fromClientId, fromAccountId, toClientId, toAccountId, amount, description } = params;
 
     // Create withdrawal transaction for sender
     const withdrawalTransaction: Transaction = {
@@ -124,7 +124,7 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
       description: `Transfert vers ${description}`,
       date: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
       status: 'completed',
-      currency,
+      currency: currentOrganization.defaultCurrency,
       recipientAccountId: toAccountId,
       recipientClientId: toClientId
     };
@@ -140,7 +140,7 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
       description: `Transfert reçu de ${description}`,
       date: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
       status: 'completed',
-      currency,
+      currency: currentOrganization.defaultCurrency,
       recipientAccountId: fromAccountId,
       recipientClientId: fromClientId
     };

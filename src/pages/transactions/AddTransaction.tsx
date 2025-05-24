@@ -3,7 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { ArrowLeft, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
 import { useClients } from '../../context/ClientContext';
 import { useTransactions } from '../../context/TransactionContext';
-import { SUPPORTED_CURRENCIES } from '../../types';
+import { useOrganization } from '../../context/OrganizationContext';
 
 const MIN_AMOUNT = 5;
 
@@ -12,6 +12,7 @@ const AddTransaction = () => {
   const location = useLocation();
   const { clients } = useClients();
   const { addTransaction } = useTransactions();
+  const { currentOrganization } = useOrganization();
   
   // Get initial values from location state
   const initialClientId = location.state?.clientId || '';
@@ -23,8 +24,7 @@ const AddTransaction = () => {
     accountId: initialAccountId,
     type: initialType,
     amount: '',
-    description: '',
-    currency: 'HTG'
+    description: ''
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -76,9 +76,9 @@ const AddTransaction = () => {
     if (!formData.amount || isNaN(Number(formData.amount))) {
       newErrors.amount = 'Veuillez entrer un montant valide';
     } else {
-      const amount =Number(formData.amount);
+      const amount = Number(formData.amount);
       if (amount < MIN_AMOUNT) {
-        newErrors.amount = `Le montant minimum est de ${MIN_AMOUNT} ${formData.currency}`;
+        newErrors.amount = `Le montant minimum est de ${MIN_AMOUNT} ${currentOrganization?.defaultCurrency}`;
       }
     }
     
@@ -107,8 +107,7 @@ const AddTransaction = () => {
         accountId: formData.accountId,
         type: formData.type as 'deposit' | 'withdrawal',
         amount: Number(formData.amount),
-        description: formData.description,
-        currency: formData.currency
+        description: formData.description
       });
       
       navigate('/transactions');
@@ -121,7 +120,7 @@ const AddTransaction = () => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: formData.currency,
+      currency: currentOrganization?.defaultCurrency || 'HTG',
       minimumFractionDigits: 2
     }).format(amount);
   };
@@ -228,53 +227,32 @@ const AddTransaction = () => {
               </>
             )}
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="form-control">
-                <label htmlFor="amount" className="form-label">
-                  Montant <span className="text-error-500">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    id="amount"
-                    name="amount"
-                    value={formData.amount}
-                    onChange={handleInputChange}
-                    className={`form-input pl-16 ${errors.amount ? 'border-error-500' : ''}`}
-                    placeholder="0"
-                    min={MIN_AMOUNT}
-                    step="1"
-                  />
-                  <div className="absolute inset-y-0 left-0 flex items-center px-3 pointer-events-none border-r bg-gray-50 rounded-l-md">
-                    <span className="text-gray-500">{formData.currency}</span>
-                  </div>
-                </div>
-                {errors.amount && (
-                  <p className="mt-1 text-sm text-error-500">{errors.amount}</p>
-                )}
-                <p className="mt-1 text-xs text-gray-500">
-                  Montant minimum: {MIN_AMOUNT} {formData.currency}
-                </p>
-              </div>
-
-              <div className="form-control">
-                <label htmlFor="currency" className="form-label">
-                  Devise <span className="text-error-500">*</span>
-                </label>
-                <select
-                  id="currency"
-                  name="currency"
-                  value={formData.currency}
+            <div className="form-control">
+              <label htmlFor="amount" className="form-label">
+                Montant <span className="text-error-500">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="number"
+                  id="amount"
+                  name="amount"
+                  value={formData.amount}
                   onChange={handleInputChange}
-                  className="form-input"
-                >
-                  {SUPPORTED_CURRENCIES.map(currency => (
-                    <option key={currency} value={currency}>
-                      {currency}
-                    </option>
-                  ))}
-                </select>
+                  className={`form-input pl-16 ${errors.amount ? 'border-error-500' : ''}`}
+                  placeholder="0"
+                  min={MIN_AMOUNT}
+                  step="1"
+                />
+                <div className="absolute inset-y-0 left-0 flex items-center px-3 pointer-events-none border-r bg-gray-50 rounded-l-md">
+                  <span className="text-gray-500">{currentOrganization?.defaultCurrency}</span>
+                </div>
               </div>
+              {errors.amount && (
+                <p className="mt-1 text-sm text-error-500">{errors.amount}</p>
+              )}
+              <p className="mt-1 text-xs text-gray-500">
+                Montant minimum: {MIN_AMOUNT} {currentOrganization?.defaultCurrency}
+              </p>
             </div>
             
             <div className="form-control">
