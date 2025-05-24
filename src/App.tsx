@@ -21,6 +21,7 @@ import AddLoan from './pages/loans/AddLoan';
 import LoanDetails from './pages/loans/LoanDetails';
 import Reports from './pages/reports/Reports';
 import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
 import AdminSettings from './pages/auth/AdminSettings';
 
 // Context
@@ -28,55 +29,53 @@ import { OrganizationProvider } from './context/OrganizationContext';
 import { ClientProvider } from './context/ClientContext';
 import { TransactionProvider } from './context/TransactionContext';
 import { LoanProvider } from './context/LoanContext';
-import { AuthProvider } from './context/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 
 function App() {
   return (
     <Router>
       <OrganizationProvider>
-        <AuthProvider>
-          <ClientProvider>
-            <TransactionProvider>
-              <LoanProvider>
-                <ToastContainer position="top-right" autoClose={3000} />
-                <Routes>
-                  <Route path="/login" element={<Login />} />
-                  <Route
-                    path="/"
-                    element={
-                      <PrivateRoute>
-                        <DashboardLayout />
-                      </PrivateRoute>
-                    }
-                  >
-                    <Route index element={<Dashboard />} />
-                    <Route path="clients">
-                      <Route index element={<ClientList />} />
-                      <Route path="add" element={<AddClient />} />
-                      <Route path="import" element={<ImportClients />} />
-                      <Route path=":id" element={<ClientDetails />} />
-                      <Route path=":id/edit" element={<EditClient />} />
-                    </Route>
-                    <Route path="transactions">
-                      <Route index element={<TransactionList />} />
-                      <Route path="add" element={<AddTransaction />} />
-                      <Route path="transfer" element={<TransferFunds />} />
-                    </Route>
-                    <Route path="loans">
-                      <Route index element={<LoanList />} />
-                      <Route path="add" element={<AddLoan />} />
-                      <Route path=":id" element={<LoanDetails />} />
-                    </Route>
-                    <Route path="reports" element={<Reports />} />
-                    <Route path="settings" element={<AdminSettings />} />
-                  </Route>
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-              </LoanProvider>
-            </TransactionProvider>
-          </ClientProvider>
-        </AuthProvider>
+        <ToastContainer position="top-right" autoClose={3000} />
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route
+            path="/"
+            element={
+              <PrivateRoute>
+                <ClientProvider>
+                  <TransactionProvider>
+                    <LoanProvider>
+                      <DashboardLayout />
+                    </LoanProvider>
+                  </TransactionProvider>
+                </ClientProvider>
+              </PrivateRoute>
+            }
+          >
+            <Route index element={<Dashboard />} />
+            <Route path="clients">
+              <Route index element={<ClientList />} />
+              <Route path="add" element={<AddClient />} />
+              <Route path="import" element={<ImportClients />} />
+              <Route path=":id" element={<ClientDetails />} />
+              <Route path=":id/edit" element={<EditClient />} />
+            </Route>
+            <Route path="transactions">
+              <Route index element={<TransactionList />} />
+              <Route path="add" element={<AddTransaction />} />
+              <Route path="transfer" element={<TransferFunds />} />
+            </Route>
+            <Route path="loans">
+              <Route index element={<LoanList />} />
+              <Route path="add" element={<AddLoan />} />
+              <Route path=":id" element={<LoanDetails />} />
+            </Route>
+            <Route path="reports" element={<Reports />} />
+            <Route path="settings" element={<AdminSettings />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </OrganizationProvider>
     </Router>
   );

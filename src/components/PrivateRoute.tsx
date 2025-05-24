@@ -1,8 +1,8 @@
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useOrganization } from '../context/OrganizationContext';
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useOrganization();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" />;
