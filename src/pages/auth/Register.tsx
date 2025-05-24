@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { PiggyBank, Upload, Eye, EyeOff, Building2, MapPin, DollarSign } from 'lucide-react';
+import { PiggyBank, Upload, Eye, EyeOff, Building2, MapPin, DollarSign, Globe2, Palette } from 'lucide-react';
 import { useOrganization } from '../../context/OrganizationContext';
-import { SUPPORTED_CURRENCIES } from '../../types';
+import { SUPPORTED_CURRENCIES, SUPPORTED_LANGUAGES, LANGUAGE_NAMES } from '../../types';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -13,6 +13,9 @@ const Register = () => {
     address: '',
     logo: '',
     defaultCurrency: 'HTG',
+    language: 'fr',
+    theme: 'light',
+    defaultInterestRate: '8.5',
     adminEmail: '',
     adminPassword: '',
     confirmPassword: '',
@@ -78,6 +81,10 @@ const Register = () => {
     if (formData.adminPassword !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Les mots de passe ne correspondent pas';
     }
+
+    if (!formData.defaultInterestRate || isNaN(Number(formData.defaultInterestRate)) || Number(formData.defaultInterestRate) < 0) {
+      newErrors.defaultInterestRate = 'Le taux d\'intérêt par défaut doit être un nombre positif';
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -89,7 +96,18 @@ const Register = () => {
     if (validateForm()) {
       setIsLoading(true);
       try {
-        await registerOrganization(formData);
+        await registerOrganization({
+          name: formData.name,
+          address: formData.address,
+          logo: formData.logo,
+          defaultCurrency: formData.defaultCurrency,
+          language: formData.language as any,
+          theme: formData.theme as any,
+          defaultInterestRate: Number(formData.defaultInterestRate),
+          adminEmail: formData.adminEmail,
+          adminPassword: formData.adminPassword,
+          adminName: formData.adminName
+        });
         navigate('/login');
       } catch (error: any) {
         setErrors(prev => ({
@@ -219,28 +237,113 @@ const Register = () => {
               )}
             </div>
 
-            {/* Default Currency */}
-            <div>
-              <label htmlFor="defaultCurrency" className="block text-sm font-medium text-gray-700">
-                Devise par Défaut <span className="text-error-500">*</span>
-              </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <DollarSign className="h-5 w-5 text-gray-400" />
+            {/* Organization Settings */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Default Currency */}
+                <div>
+                  <label htmlFor="defaultCurrency" className="block text-sm font-medium text-gray-700">
+                    Devise par Défaut <span className="text-error-500">*</span>
+                  </label>
+                  <div className="mt-1 relative rounded-md shadow-sm">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <DollarSign className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <select
+                      id="defaultCurrency"
+                      
+                      name="defaultCurrency"
+                      value={formData.defaultCurrency}
+                      onChange={handleInputChange}
+                      className="block w-full pl-10 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+                    >
+                      {SUPPORTED_CURRENCIES.map(currency => (
+                        <option key={currency} value={currency}>
+                          {currency}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                <select
-                  id="defaultCurrency"
-                  name="defaultCurrency"
-                  value={formData.defaultCurrency}
-                  onChange={handleInputChange}
-                  className="block w-full pl-10 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
-                >
-                  {SUPPORTED_CURRENCIES.map(currency => (
-                    <option key={currency} value={currency}>
-                      {currency}
-                    </option>
-                  ))}
-                </select>
+
+                {/* Language */}
+                <div>
+                  <label htmlFor="language" className="block text-sm font-medium text-gray-700">
+                    Langue <span className="text-error-500">*</span>
+                  </label>
+                  <div className="mt-1 relative rounded-md shadow-sm">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Globe2 className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <select
+                      id="language"
+                      name="language"
+                      value={formData.language}
+                      onChange={handleInputChange}
+                      className="block w-full pl-10 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+                    >
+                      {SUPPORTED_LANGUAGES.map(lang => (
+                        <option key={lang} value={lang}>
+                          {LANGUAGE_NAMES[lang]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Theme */}
+                <div>
+                  <label htmlFor="theme" className="block text-sm font-medium text-gray-700">
+                    Thème <span className="text-error-500">*</span>
+                  </label>
+                  <div className="mt-1 relative rounded-md shadow-sm">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Palette className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <select
+                      id="theme"
+                      name="theme"
+                      value={formData.theme}
+                      onChange={handleInputChange}
+                      className="block w-full pl-10 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+                    >
+                      <option value="light">Clair</option>
+                      <option value="dark">Sombre</option>
+                      <option value="custom">Personnalisé</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Default Interest Rate */}
+                <div>
+                  <label htmlFor="defaultInterestRate" className="block text-sm font-medium text-gray-700">
+                    Taux d'Intérêt par Défaut (%) <span className="text-error-500">*</span>
+                  </label>
+                  <div className="mt-1 relative rounded-md shadow-sm">
+                    <input
+                      type="number"
+                      id="defaultInterestRate"
+                      name="defaultInterestRate"
+                      value={formData.defaultInterestRate}
+                      onChange={handleInputChange}
+                      step="0.1"
+                      min="0"
+                      className={`block w-full pr-8 sm:text-sm rounded-md ${
+                        errors.defaultInterestRate
+                          ? 'border-error-300 focus:ring-error-500 focus:border-error-500'
+                          : 'border-gray-300 focus:ring-primary-500 focus:border-primary-500'
+                      }`}
+                    />
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                      <span className="text-gray-500">%</span>
+                    </div>
+                  </div>
+                  {errors.defaultInterestRate && (
+                    <p className="mt-2 text-sm text-error-600">{errors.defaultInterestRate}</p>
+                  )}
+                </div>
               </div>
             </div>
 
