@@ -4,6 +4,7 @@ import { mockTransactions, getNewId } from '../data/mockData';
 import { toast } from 'react-toastify';
 import { useClients } from './ClientContext';
 import { format } from 'date-fns';
+import { useOrganization } from './OrganizationContext';
 
 interface TransactionContextProps {
   transactions: Transaction[];
@@ -11,7 +12,7 @@ interface TransactionContextProps {
   error: string | null;
   getTransaction: (id: string) => Transaction | undefined;
   getClientTransactions: (clientId: string) => Transaction[];
-  addTransaction: (transaction: Omit<Transaction, 'id' | 'date' | 'status'>) => void;
+  addTransaction: (transaction: Omit<Transaction, 'id' | 'date' | 'status' | 'organizationId'>) => void;
   deleteTransaction: (id: string) => void;
   transferFunds: (params: {
     fromClientId: string;
@@ -31,17 +32,22 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { updateClientBalance } = useClients();
+  const { currentOrganization } = useOrganization();
 
   useEffect(() => {
     // Simulate API fetch
     setTimeout(() => {
       try {
-        // Load from localStorage if available, otherwise use mock data
-        const storedTransactions = localStorage.getItem('volvy-bank-transactions');
+        // Load from localStorage if available
+        const storedTransactions = localStorage.getItem(`volvy-bank-transactions-${currentOrganization?.id}`);
         if (storedTransactions) {
           setTransactions(JSON.parse(storedTransactions));
         } else {
-          setTransactions(mockTransactions);
+          const initialTransactions = mockTransactions.map(transaction => ({
+            ...transaction,
+            organizationId: currentOrganization?.id || ''
+          }));
+          setTransactions(initialTransactions);
         }
         setLoading(false);
       } catch (err) {
@@ -49,27 +55,34 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
         setLoading(false);
       }
     }, 600);
-  }, []);
+  }, [currentOrganization?.id]);
 
   // Save to localStorage whenever transactions changes
   useEffect(() => {
-    if (!loading && transactions.length > 0) {
-      localStorage.setItem('volvy-bank-transactions', JSON.stringify(transactions));
+    if (!loading && transactions.length > 0 && currentOrganization?.id) {
+      localStorage.setItem(`volvy-bank-transactions-${currentOrganization.id}`, JSON.stringify(transactions));
     }
-  }, [transactions, loading]);
+  }, [transactions, loading, currentOrganization?.id]);
 
   const getTransaction = (id: string) => {
-    return transactions.find(transaction => transaction.id === id);
+    return transactions.find(transaction => 
+      transaction.id === id && transaction.organizationId === currentOrganization?.id
+    );
   };
 
   const getClientTransactions = (clientId: string) => {
-    return transactions.filter(transaction => transaction.clientId === clientId);
+    return transactions.filter(transaction => 
+      transaction.clientId === clientId && transaction.organizationId === currentOrganization?.id
+    );
   };
 
-  const addTransaction = (transaction: Omit<Transaction, 'id' | 'date' | 'status'>) => {
+  const addTransaction = (transaction: Omit<Transaction, 'id' | 'date' | 'status' | 'organizationId'>) => {
+    if (!currentOrganization?.id) return;
+
     const newTransaction: Transaction = {
       ...transaction,
       id: getNewId('t'),
+      organizationId: currentOrganization.id,
       date: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
       status: 'completed',
     };
@@ -96,11 +109,14 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
     description: string;
     currency: string;
   }) => {
+    if (!currentOrganization?.id) return;
+
     const { fromClientId, fromAccountId, toClientId, toAccountId, amount, description, currency } = params;
 
     // Create withdrawal transaction for sender
     const withdrawalTransaction: Transaction = {
       id: getNewId('t'),
+      organizationId: currentOrganization.id,
       clientId: fromClientId,
       accountId: fromAccountId,
       type: 'transfer',
@@ -116,6 +132,7 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
     // Create deposit transaction for recipient
     const depositTransaction: Transaction = {
       id: getNewId('t'),
+      organizationId: currentOrganization.id,
       clientId: toClientId,
       accountId: toAccountId,
       type: 'transfer',
@@ -138,7 +155,9 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
   };
 
   const deleteTransaction = (id: string) => {
-    const transaction = transactions.find(t => t.id === id);
+    const transaction = transactions.find(t => 
+      t.id === id && t.organizationId === currentOrganization?.id
+    );
     
     if (transaction) {
       // Reverse the effect on client balance before deletion
@@ -150,7 +169,7 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
       );
       
       setTransactions(prevTransactions => 
-        prevTransactions.filter(transaction => transaction.id !== id)
+        prevTransactions.filter(t => !(t.id === id && t.organizationId === currentOrganization?.id))
       );
       
       toast.success('Transaction supprimée avec succès!');
@@ -160,7 +179,7 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
   return (
     <TransactionContext.Provider
       value={{
-        transactions,
+        transactions: transactions.filter(t => t.organizationId === currentOrganization?.id),
         loading,
         error,
         getTransaction,

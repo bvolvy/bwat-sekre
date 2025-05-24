@@ -3,6 +3,7 @@ import { Loan, LoanPayment } from '../types';
 import { mockLoans, getNewId } from '../data/mockData';
 import { toast } from 'react-toastify';
 import { format, addMonths } from 'date-fns';
+import { useOrganization } from './OrganizationContext';
 
 interface LoanContextProps {
   loans: Loan[];
@@ -10,7 +11,7 @@ interface LoanContextProps {
   error: string | null;
   getLoan: (id: string) => Loan | undefined;
   getClientLoans: (clientId: string) => Loan[];
-  addLoan: (loan: Omit<Loan, 'id' | 'payments' | 'remainingBalance' | 'status'>) => void;
+  addLoan: (loan: Omit<Loan, 'id' | 'payments' | 'remainingBalance' | 'status' | 'organizationId'>) => void;
   updateLoanStatus: (id: string, status: Loan['status']) => void;
   addLoanPayment: (loanId: string, amount: number) => void;
   deleteLoan: (id: string) => void;
@@ -22,17 +23,22 @@ export const LoanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loans, setLoans] = useState<Loan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { currentOrganization } = useOrganization();
 
   useEffect(() => {
     // Simulate API fetch
     setTimeout(() => {
       try {
-        // Load from localStorage if available, otherwise use mock data
-        const storedLoans = localStorage.getItem('volvy-bank-loans');
+        // Load from localStorage if available
+        const storedLoans = localStorage.getItem(`volvy-bank-loans-${currentOrganization?.id}`);
         if (storedLoans) {
           setLoans(JSON.parse(storedLoans));
         } else {
-          setLoans(mockLoans);
+          const initialLoans = mockLoans.map(loan => ({
+            ...loan,
+            organizationId: currentOrganization?.id || ''
+          }));
+          setLoans(initialLoans);
         }
         setLoading(false);
       } catch (err) {
@@ -40,27 +46,34 @@ export const LoanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setLoading(false);
       }
     }, 700);
-  }, []);
+  }, [currentOrganization?.id]);
 
   // Save to localStorage whenever loans changes
   useEffect(() => {
-    if (!loading && loans.length > 0) {
-      localStorage.setItem('volvy-bank-loans', JSON.stringify(loans));
+    if (!loading && loans.length > 0 && currentOrganization?.id) {
+      localStorage.setItem(`volvy-bank-loans-${currentOrganization.id}`, JSON.stringify(loans));
     }
-  }, [loans, loading]);
+  }, [loans, loading, currentOrganization?.id]);
 
   const getLoan = (id: string) => {
-    return loans.find(loan => loan.id === id);
+    return loans.find(loan => 
+      loan.id === id && loan.organizationId === currentOrganization?.id
+    );
   };
 
   const getClientLoans = (clientId: string) => {
-    return loans.filter(loan => loan.clientId === clientId);
+    return loans.filter(loan => 
+      loan.clientId === clientId && loan.organizationId === currentOrganization?.id
+    );
   };
 
-  const addLoan = (loanData: Omit<Loan, 'id' | 'payments' | 'remainingBalance' | 'status'>) => {
+  const addLoan = (loanData: Omit<Loan, 'id' | 'payments' | 'remainingBalance' | 'status' | 'organizationId'>) => {
+    if (!currentOrganization?.id) return;
+
     const newLoan: Loan = {
       ...loanData,
       id: getNewId('l'),
+      organizationId: currentOrganization.id,
       payments: [],
       remainingBalance: loanData.amount,
       status: 'pending'
@@ -73,7 +86,9 @@ export const LoanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const updateLoanStatus = (id: string, status: Loan['status']) => {
     setLoans(prevLoans => 
       prevLoans.map(loan => 
-        loan.id === id ? { ...loan, status } : loan
+        loan.id === id && loan.organizationId === currentOrganization?.id
+          ? { ...loan, status }
+          : loan
       )
     );
     toast.success(`Statut du prêt mis à jour: ${status}`);
@@ -90,7 +105,7 @@ export const LoanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     setLoans(prevLoans =>
       prevLoans.map(loan => {
-        if (loan.id === loanId) {
+        if (loan.id === loanId && loan.organizationId === currentOrganization?.id) {
           const newRemainingBalance = Math.max(0, loan.remainingBalance - amount);
           const newStatus = newRemainingBalance === 0 ? 'completed' : loan.status;
           
@@ -109,14 +124,18 @@ export const LoanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const deleteLoan = (id: string) => {
-    setLoans(prevLoans => prevLoans.filter(loan => loan.id !== id));
+    setLoans(prevLoans => 
+      prevLoans.filter(loan => 
+        !(loan.id === id && loan.organizationId === currentOrganization?.id)
+      )
+    );
     toast.success('Prêt supprimé avec succès!');
   };
 
   return (
     <LoanContext.Provider
       value={{
-        loans,
+        loans: loans.filter(loan => loan.organizationId === currentOrganization?.id),
         loading,
         error,
         getLoan,
