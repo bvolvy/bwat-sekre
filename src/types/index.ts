@@ -1,5 +1,24 @@
 import { type } from "os";
 
+export interface Organization {
+  id: string;
+  name: string;
+  address: string;
+  logo?: string;
+  defaultCurrency: Currency;
+  createdAt: string;
+}
+
+export interface User {
+  id: string;
+  organizationId: string;
+  email: string;
+  password: string;
+  name: string;
+  role: 'admin' | 'employee';
+  createdAt: string;
+}
+
 export interface Account {
   id: string;
   accountNumber: string;
@@ -7,10 +26,12 @@ export interface Account {
   balance: number;
   currency: string;
   createdAt: string;
+  organizationId: string;
 }
 
 export interface Client {
   id: string;
+  organizationId: string;
   firstName: string;
   lastName: string;
   phoneNumber: string;
@@ -28,6 +49,7 @@ export interface Client {
 
 export interface Transaction {
   id: string;
+  organizationId: string;
   clientId: string;
   accountId: string;
   type: 'deposit' | 'withdrawal' | 'transfer';
@@ -36,19 +58,20 @@ export interface Transaction {
   date: string;
   status: 'pending' | 'completed' | 'failed';
   currency: string;
-  recipientAccountId?: string; // For transfers
-  recipientClientId?: string; // For transfers
+  recipientAccountId?: string;
+  recipientClientId?: string;
 }
 
 export interface Loan {
   id: string;
+  organizationId: string;
   clientId: string;
   amount: number;
   interestRate: number;
-  term: number; // in months
+  term: number;
   startDate: string;
   endDate: string;
-  paymentAmount: number; // monthly payment amount
+  paymentAmount: number;
   status: 'pending' | 'approved' | 'active' | 'completed' | 'defaulted';
   purpose: string;
   remainingBalance: number;
@@ -73,14 +96,14 @@ export interface ReportFilter {
   type: ReportType;
   category: ReportCategory;
   clientId?: string;
+  organizationId: string;
 }
 
-export const SUPPORTED_CURRENCIES = ['HTG', 'USD'] as const;
+export const SUPPORTED_CURRENCIES = ['HTG', 'USD', 'EUR'] as const;
 export type Currency = typeof SUPPORTED_CURRENCIES[number];
 
-// Helper function to generate account numbers
 export const generateAccountNumber = (): string => {
-  const prefix = 'BS'; // Bwat Sekrè prefix
+  const prefix = 'BS';
   const randomDigits = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
   return `${prefix}${randomDigits}`;
 };
