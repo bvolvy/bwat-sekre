@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { PiggyBank, Lock, Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useOrganization } from '../../context/OrganizationContext';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated } = useOrganization();
   const [credentials, setCredentials] = useState({
     email: '',
     password: ''
@@ -55,16 +55,23 @@ const Login = () => {
     
     if (validateForm()) {
       setIsLoading(true);
-      const success = await login(credentials.email, credentials.password);
-      
-      if (success) {
-        navigate('/');
-      } else {
+      try {
+        const success = await login(credentials.email, credentials.password);
+        
+        if (success) {
+          navigate('/');
+        } else {
+          setErrors({
+            auth: 'Email ou mot de passe incorrect'
+          });
+        }
+      } catch (error: any) {
         setErrors({
-          auth: 'Email ou mot de passe incorrect'
+          auth: error.message || 'Une erreur est survenue lors de la connexion'
         });
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     }
   };
   
@@ -80,7 +87,10 @@ const Login = () => {
           Bwat Sekrè
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Système de Gestion Bancaire
+          Ou{' '}
+          <Link to="/register" className="font-medium text-primary-600 hover:text-primary-500">
+            créez votre organisation
+          </Link>
         </p>
       </div>
 
