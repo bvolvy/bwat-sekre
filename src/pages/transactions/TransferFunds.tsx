@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Send, User } from 'lucide-react';
 import { useClients } from '../../context/ClientContext';
 import { useTransactions } from '../../context/TransactionContext';
-import { SUPPORTED_CURRENCIES } from '../../types';
+import { useOrganization } from '../../context/OrganizationContext';
 
 const MIN_AMOUNT = 5;
 
@@ -11,6 +11,7 @@ const TransferFunds = () => {
   const navigate = useNavigate();
   const { clients } = useClients();
   const { transferFunds } = useTransactions();
+  const { currentOrganization } = useOrganization();
 
   const [formData, setFormData] = useState({
     fromClientId: '',
@@ -18,8 +19,7 @@ const TransferFunds = () => {
     toClientId: '',
     toAccountId: '',
     amount: '',
-    description: '',
-    currency: 'HTG'
+    description: ''
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -81,7 +81,7 @@ const TransferFunds = () => {
     } else {
       const amount = Number(formData.amount);
       if (amount < MIN_AMOUNT) {
-        newErrors.amount = `Le montant minimum est de ${MIN_AMOUNT} ${formData.currency}`;
+        newErrors.amount = `Le montant minimum est de ${MIN_AMOUNT} ${currentOrganization?.defaultCurrency}`;
       }
 
       // Check if sender has sufficient funds
@@ -110,8 +110,7 @@ const TransferFunds = () => {
         toClientId: formData.toClientId,
         toAccountId: formData.toAccountId,
         amount: Number(formData.amount),
-        description: formData.description,
-        currency: formData.currency
+        description: formData.description
       });
 
       navigate('/transactions');
@@ -126,7 +125,7 @@ const TransferFunds = () => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: formData.currency,
+      currency: currentOrganization?.defaultCurrency || 'HTG',
       minimumFractionDigits: 2
     }).format(amount);
   };
@@ -279,7 +278,7 @@ const TransferFunds = () => {
           </div>
 
           {/* Transfer Details */}
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="mt-8">
             <div className="form-control">
               <label htmlFor="amount" className="form-label">
                 Montant <span className="text-error-500">*</span>
@@ -297,54 +296,35 @@ const TransferFunds = () => {
                   step="1"
                 />
                 <div className="absolute inset-y-0 left-0 flex items-center px-3 pointer-events-none border-r bg-gray-50 rounded-l-md">
-                  <span className="text-gray-500">{formData.currency}</span>
+                  <span className="text-gray-500">{currentOrganization?.defaultCurrency}</span>
                 </div>
               </div>
               {errors.amount && (
                 <p className="mt-1 text-sm text-error-500">{errors.amount}</p>
               )}
               <p className="mt-1 text-xs text-gray-500">
-                Montant minimum: {MIN_AMOUNT} {formData.currency}
+                Montant minimum: {MIN_AMOUNT} {currentOrganization?.defaultCurrency}
               </p>
             </div>
 
-            <div className="form-control">
-              <label htmlFor="currency" className="form-label">
-                Devise <span className="text-error-500">*</span>
-              </label>
-              <select
-                id="currency"
-                name="currency"
-                value={formData.currency}
-                onChange={handleInputChange}
-                className="form-input"
-              >
-                {SUPPORTED_CURRENCIES.map(currency => (
-                  <option key={currency} value={currency}>
-                    {currency}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <div className="form-control">
-              <label htmlFor="description" className="form-label">
-                Description <span className="text-error-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                className={`form-input ${errors.description ? 'border-error-500' : ''}`}
-                placeholder="Ex: Remboursement, Paiement de service, etc."
-              />
-              {errors.description && (
-                <p className="mt-1 text-sm text-error-500">{errors.description}</p>
-              )}
+            <div className="mt-4">
+              <div className="form-control">
+                <label htmlFor="description" className="form-label">
+                  Description <span className="text-error-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  className={`form-input ${errors.description ? 'border-error-500' : ''}`}
+                  placeholder="Ex: Remboursement, Paiement de service, etc."
+                />
+                {errors.description && (
+                  <p className="mt-1 text-sm text-error-500">{errors.description}</p>
+                )}
+              </div>
             </div>
           </div>
 
