@@ -33,8 +33,8 @@ import PrivateRoute from './components/PrivateRoute';
 
 function App() {
   return (
-    <OrganizationProvider>
-      <Router>
+    <Router>
+      <OrganizationProvider>
         <AuthProvider>
           <ClientProvider>
             <TransactionProvider>
@@ -77,8 +77,8 @@ function App() {
             </TransactionProvider>
           </ClientProvider>
         </AuthProvider>
-      </Router>
-    </OrganizationProvider>
+      </OrganizationProvider>
+    </Router>
   );
 }
 
